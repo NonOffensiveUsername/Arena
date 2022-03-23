@@ -18,17 +18,17 @@ class Interface(Thread):
 		self.root = Tk()
 		self.root.protocol("WM_DELETE_WINDOW", self.callback)
 		self.root.title("Arena Pre-Alpha")
-		self.mainFieldText = StringVar()
 
 		mainFrame = ttk.Frame(self.root)
 		mainFrame.bind_all('<KeyPress>', self.logEvent)
+		mainFrame.grid()
 
 		main_font = font.nametofont("TkFixedFont")
+		
+		self.field = Text(mainFrame, state = "normal", width = 80, height = 24, background = "black", foreground = "white")
+		self.field.grid()
 
-		mainField = ttk.Label(mainFrame, textvariable = self.mainFieldText, font = main_font)
-
-		mainFrame.grid(column = 0, row = 0)
-		mainField.grid(column = 0, row = 0)
+		self.field.insert("1.0", (" " * 80 + "\n") * 24) # Initialize text field full of spaces
 
 		self.events = []
 
@@ -45,24 +45,18 @@ class Interface(Thread):
 		self.root.mainloop()
 
 	def render_grid(self, grid, width, height):
-		buffer = ""
-		for y in range(0, height):
-			for x in range(0, width):
-				if (x, y) in grid:
-					buffer += grid[(x, y)]
-				else:
-					buffer += ' '
-			buffer += "\n"
-		for announcement in self.announcements:
-			buffer += announcement + "\n"
-		self.mainFieldText.set(buffer)
+		for coord in grid:
+			x = coord[0]
+			y = coord[1]
+			start = str(y + 1) + "." + str(x)
+			end = str(y + 1) + "." + str(x + 1)
+			self.field.replace(start, end, grid[coord])
 
 	def set_text(self, text):
-		self.mainFieldText.set(text)
+		pass
 
 	def logEvent(self, event):
 		self.events.append(event)
 
 	def add_announcement(self, announcement):
-		self.announcements.append(announcement)
-		self.announcements.pop(0)
+		pass
