@@ -1,0 +1,17 @@
+{
+	"X":{
+		"wall_material":"stone",
+		"floor_material":"stone",
+		"ceiling_material":"stone"
+	},
+	".":{
+		"wall_material":"air",
+		"floor_material":"dirt",
+		"ceiling_material":"air"
+	},
+	"O":{
+		"wall_material":"wood",
+		"floor_material":"dirt",
+		"ceiling_material":"air"
+	}
+}
