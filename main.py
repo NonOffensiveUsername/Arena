@@ -57,27 +57,33 @@ move_binds = {
 
 ui_mode = Mode.MAIN
 current_menu = None
+quit = False
 
 current_time = time.time()
 tick_rate = 1/60
-
-while UI.is_alive():
+while not quit:
 	current_time = time.time()
 	if len(UI.events) > 0:
 		event = UI.events.pop(0)
-		UI.add_announcement(event.keysym)
+		key = None
+		try:
+			key = chr(event.key_code)
+		except:
+			key = event.key_code
+		if key == 'p': quit = True
+		UI.add_announcement(str(key))
 
 		if ui_mode == Mode.MAIN:
 			do_process = False
-			if event.keysym in move_binds:
-				new_position = (player.position[0] + move_binds[event.keysym][0], player.position[1] + move_binds[event.keysym][1])
+			if key in move_binds:
+				new_position = (player.position[0] + move_binds[key][0], player.position[1] + move_binds[key][1])
 				if tiles.get_tile(new_position[0], new_position[1]).traversal_cost() >= 0:
-					player.move(tiles, move_binds[event.keysym])
+					player.move(tiles, move_binds[key])
 					do_process = True
-			elif event.keysym == 's':
+			elif key == 's':
 				player.delay = 10
 				do_process = True
-			elif event.keysym == 'c':
+			elif key == 'c':
 				ui_mode = Mode.MENU
 				current_menu = Menu("cast_menu", "Cast Spell:", ['Fireball', 'Invisibility', 'Heal'])
 				# Execution will run off to the next if block, we clear the current event so it isn't used as input in the created menu
@@ -88,11 +94,11 @@ while UI.is_alive():
 			
 		if ui_mode == Mode.MENU:
 			if event: # Event could be None
-				if event.keysym == 'a':
+				if key == 'a':
 					ui_mode = Mode.MAIN
-				elif event.keysym == 'j':
+				elif key == 'j':
 					current_menu.pointer += 1
-				elif event.keysym == 'k':
+				elif key == 'k':
 					current_menu.pointer -= 1
 			UI.set_text(current_menu.to_string())
 
@@ -104,6 +110,6 @@ while UI.is_alive():
 			for e in entities.contents:
 				intermediate_grid[e.position] = e.display_tile
 			# Send our intermediate grid off to be rendered
-			UI.render_grid(intermediate_grid, tiles.width + 20, tiles.height)
+			UI.render_grid(intermediate_grid)
 	else:
 		time.sleep(tick_rate - (time.time() - current_time))

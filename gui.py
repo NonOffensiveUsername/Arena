@@ -1,6 +1,5 @@
-from tkinter import *
-from tkinter import ttk
-from tkinter import font
+from asciimatics.screen import Screen
+from asciimatics.event import KeyboardEvent
 from threading import Thread
 
 class Interface(Thread):
@@ -9,54 +8,46 @@ class Interface(Thread):
 
 		Thread.__init__(self)
 		self.isInitialized = False
+		self.daemon = True
 		self.start()
-
-	def callback(self):
-		self.root.quit()
 		
 	def run(self):
-		self.root = Tk()
-		self.root.protocol("WM_DELETE_WINDOW", self.callback)
-		self.root.title("Arena Pre-Alpha")
 
-		mainFrame = ttk.Frame(self.root)
-		mainFrame.bind_all('<KeyPress>', self.logEvent)
-		mainFrame.grid()
-
-		main_font = font.nametofont("TkFixedFont")
-		
-		self.field = Text(mainFrame, state = "normal", width = 80, height = 24, background = "black", foreground = "white")
-		self.field.grid()
-
-		self.field.insert("1.0", (" " * 80 + "\n") * 24) # Initialize text field full of spaces
+		self.console = Screen.open()
+		self.console.clear()
+		self.console.print_at("test", 0, 0)
+		self.console.refresh()
 
 		self.events = []
-
 		self.announcements = [
-			"test 1",
-			"test 2",
-			"test 3",
+			"Test 1",
+			"Test 2",
+			"Test 3",
 			"test 4",
-			"test 5"
+			"Test 5"
 		]
 
 		self.isInitialized = True
 
-		self.root.mainloop()
+		while True:
+			self.console.wait_for_input(86400)
+			event = self.console.get_event()
+			if isinstance(event, KeyboardEvent):
+				self.events.append(event)
 
-	def render_grid(self, grid, width, height):
+	def render_grid(self, grid):
 		for coord in grid:
 			x = coord[0]
 			y = coord[1]
-			start = str(y + 1) + "." + str(x)
-			end = str(y + 1) + "." + str(x + 1)
-			self.field.replace(start, end, grid[coord])
+			self.console.print_at(grid[coord], x, y)
+		self.console.refresh()
 
 	def set_text(self, text):
 		pass
 
-	def logEvent(self, event):
-		self.events.append(event)
-
 	def add_announcement(self, announcement):
-		pass
+		self.announcements.append(announcement)
+		self.announcements.pop(0)
+		for e in range(0, 5):
+			self.console.print_at(self.announcements[e].ljust(80), 0, 21 + e)
+		self.console.refresh()
