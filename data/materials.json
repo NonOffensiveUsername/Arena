@@ -53,5 +53,16 @@
 		"fg":9,
 		"bg":1,
 		"floor_color":1
+	},
+	{
+		"name":"vegetation",
+		"state":"solid",
+		"density":0.75,
+		"hardness":0,
+		"opacity":1,
+		"texture":"&",
+		"fg":2,
+		"bg":0,
+		"floor_color":2
 	}
 ]
