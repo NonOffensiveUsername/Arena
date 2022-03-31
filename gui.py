@@ -39,7 +39,13 @@ class Interface(Thread):
 		for coord in grid:
 			x = coord[0]
 			y = coord[1]
-			self.console.print_at(grid[coord], x, y)
+			bright = False
+			glyph = grid[coord]
+			bright = glyph.fg >= 8
+			if bright:
+				self.console.print_at(glyph.character, x, y, colour = glyph.fg - 8, bg = glyph.bg, attr = 1)
+			else:
+				self.console.print_at(glyph.character, x, y, colour = glyph.fg, bg = glyph.bg)
 		self.console.refresh()
 
 	def set_text(self, text):

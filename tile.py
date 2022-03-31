@@ -36,7 +36,7 @@ class Tile:
 
 class VoidTile(Tile):
 	def __init__(self):
-		VOID = Material("void", State.VOID, 0, 0, 1, '?')
+		VOID = Material("void", State.VOID, 0, 0, 1, '?', 0, 0, 0)
 		self.wall_material = VOID
 		self.floor_material = VOID
 		self.ceiling_material = VOID

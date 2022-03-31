@@ -17,12 +17,13 @@ tiles = loader.load_map(mat_dict)
 
 # Creating test player entity
 player = Entity("1d6", "Player", (5, 5), mat_dict["flesh"])
+player.display_tile = Glyph("@", 1, 0)
 player.is_player = True
 feloid = entity.RandomWalker("1d4", "Feloid Wanderer", (17, 8), mat_dict["flesh"])
-feloid.display_tile = 'f'
+feloid.display_tile = Glyph("f", 5, 0)
 feloid.speed = 0.5
 kobold = entity.Chaser("1d4", "Kobold Chaser", (15, 6), mat_dict["flesh"])
-kobold.display_tile = 'k'
+kobold.display_tile = Glyph('k', 3, 0)
 kobold.speed = 2.0
 kobold.target = player
 
@@ -105,8 +106,6 @@ while not quit:
 		if ui_mode == Mode.MAIN:
 			# Build intermediate render object from tile map and add player
 			intermediate_grid = tiles.map(tilemappings.testMappingFunction)
-			intermediate_grid[(65, 7)] = ":"
-			intermediate_grid[(66, 7)] = "O"
 			for e in entities.contents:
 				intermediate_grid[e.position] = e.display_tile
 			# Send our intermediate grid off to be rendered

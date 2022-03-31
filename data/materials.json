@@ -5,7 +5,10 @@
 		"density":10,
 		"hardness":5,
 		"opacity":1,
-		"texture":"X"
+		"texture":"X",
+		"fg":8,
+		"bg":0,
+		"floor_color":8
 	},
 	{
 		"name":"dirt",
@@ -13,7 +16,10 @@
 		"density":3,
 		"hardness":0,
 		"opacity":1,
-		"texture":"%"
+		"texture":"%",
+		"fg":0,
+		"bg":3,
+		"floor_color":3
 	},
 	{
 		"name":"wood",
@@ -21,7 +27,10 @@
 		"density":3,
 		"hardness":3,
 		"opacity":1,
-		"texture":"O"
+		"texture":"O",
+		"fg":3,
+		"bg":0,
+		"floor_color":11
 	},
 	{
 		"name":"air",
@@ -29,7 +38,10 @@
 		"density":0.01,
 		"hardness":1,
 		"opacity":0,
-		"texture":"."
+		"texture":".",
+		"fg":8,
+		"bg":0,
+		"floor_color":0
 	},
 	{
 		"name":"flesh",
@@ -37,6 +49,9 @@
 		"density":1,
 		"hardness":0,
 		"opacity":1,
-		"texture":"&"
+		"texture":"&",
+		"fg":9,
+		"bg":1,
+		"floor_color":1
 	}
 ]

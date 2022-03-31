@@ -29,13 +29,22 @@ class Mode(Enum):
 	MENU = 2
 
 class Material:
-	def __init__(self, name, state, density, hardness, opacity, texture):
+	def __init__(self, name, state, density, hardness, opacity, texture, fg, bg, floor_color):
 		self.name = name
 		self.state = state
 		self.density = density
 		self.hardness = hardness
 		self.opacity = opacity
 		self.texture = texture
+		self.fg = fg
+		self.bg = bg
+		self.floor_color = floor_color
+
+class Glyph:
+	def __init__(self, character, fg, bg):
+		self.character = character
+		self.fg = fg
+		self.bg = bg
 
 class Language:
 	def __init__(self, vocabulary, interjections, sentenceMin, sentenceMax, interjectionFrequency):
