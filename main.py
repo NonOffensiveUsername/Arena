@@ -105,7 +105,7 @@ while not quit:
 
 		if ui_mode == Mode.MAIN:
 			# Build intermediate render object from tile map and add player
-			intermediate_grid = tiles.map(tilemappings.testMappingFunction)
+			intermediate_grid = tiles.map(tilemappings.visual_map_func)
 			for e in entities.contents:
 				intermediate_grid[e.position] = e.display_tile
 			# Send our intermediate grid off to be rendered

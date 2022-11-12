@@ -29,7 +29,7 @@ class Mode(Enum):
 	MENU = 2
 
 class Material:
-	def __init__(self, name, state, density, hardness, opacity, texture, fg, bg, floor_color):
+	def __init__(self, name, state, density, hardness, opacity, texture, fg, bg, floor_color, smooth = False):
 		self.name = name
 		self.state = state
 		self.density = density
@@ -39,6 +39,7 @@ class Material:
 		self.fg = fg
 		self.bg = bg
 		self.floor_color = floor_color
+		self.smooth = smooth
 
 class Glyph:
 	def __init__(self, character, fg, bg):

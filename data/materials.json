@@ -8,7 +8,8 @@
 		"texture":"X",
 		"fg":8,
 		"bg":0,
-		"floor_color":8
+		"floor_color":8,
+		"smooth":true
 	},
 	{
 		"name":"dirt",
