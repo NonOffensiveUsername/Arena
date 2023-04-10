@@ -6,7 +6,7 @@ class Menu():
 		self.options = options
 		self.pointer = pointer
 
-	def to_string(self):
+	def __str__(self):
 		out_string = self.title + "\n"
 		for x in range(0, len(self.options)):
 			buffer = " | >" if x == self.pointer else " |  "

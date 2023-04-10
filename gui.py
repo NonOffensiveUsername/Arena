@@ -1,6 +1,5 @@
-from asciimatics.screen import Screen
-from asciimatics.event import KeyboardEvent
 from threading import Thread
+import sdl
 
 class Interface(Thread):
 
@@ -12,11 +11,9 @@ class Interface(Thread):
 		self.start()
 		
 	def run(self):
-
-		self.console = Screen.open()
-		self.console.clear()
-		self.console.print_at("test", 0, 0)
-		self.console.refresh()
+		self.window = sdl.Window("test", 200, 200, 800, 400) # 100x25 glyphs
+		self.window.flush()
+		self.window.update()
 
 		self.events = []
 		self.announcements = [
@@ -29,31 +26,28 @@ class Interface(Thread):
 
 		self.isInitialized = True
 
-		while True:
-			self.console.wait_for_input(86400)
-			event = self.console.get_event()
-			if isinstance(event, KeyboardEvent):
-				self.events.append(event)
+		while not self.window.quit:
+			self.events += self.window.poll()
 
 	def render_grid(self, grid):
+		self.window.flush()
 		for coord in grid:
 			x = coord[0]
 			y = coord[1]
-			bright = False
 			glyph = grid[coord]
-			bright = glyph.fg >= 8
-			if bright:
-				self.console.print_at(glyph.character, x, y, colour = glyph.fg - 8, bg = glyph.bg, attr = 1)
-			else:
-				self.console.print_at(glyph.character, x, y, colour = glyph.fg, bg = glyph.bg)
-		self.console.refresh()
+			self.window.print_glyph(glyph.character, x, y, glyph.fg, glyph.bg)
+		self.draw_announcements()
+		self.window.update()
 
 	def set_text(self, text):
-		pass
+		self.window.flush()
+		self.window.print_string(text, 0, 0)
+		self.window.update()
 
 	def add_announcement(self, announcement):
 		self.announcements.append(announcement)
 		self.announcements.pop(0)
+
+	def draw_announcements(self):
 		for e in range(0, 5):
-			self.console.print_at(self.announcements[e].ljust(80), 0, 21 + e)
-		self.console.refresh()
+			self.window.print_string(self.announcements[e], 0, 20 + e)

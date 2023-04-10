@@ -6,10 +6,9 @@ from gui import Interface
 from menu import Menu
 import tilemappings
 import util
-from loader import Loader
+import loader
 import time
 
-loader = Loader()
 mat_dict = loader.load_materials()
 tiles = loader.load_map(mat_dict)
 
@@ -17,13 +16,13 @@ tiles = loader.load_map(mat_dict)
 
 # Creating test player entity
 player = Entity("1d6", "Player", (5, 5), mat_dict["flesh"])
-player.display_tile = Glyph("@", 1, 0)
+player.display_tile = Glyph("@", (255, 0, 0), (0, 0, 0))
 player.is_player = True
 feloid = entity.RandomWalker("1d4", "Feloid Wanderer", (17, 8), mat_dict["flesh"])
-feloid.display_tile = Glyph("f", 5, 0)
+feloid.display_tile = Glyph("f", (255, 130, 20), (0, 0, 0))
 feloid.speed = 0.5
 kobold = entity.Chaser("1d4", "Kobold Chaser", (15, 6), mat_dict["flesh"])
-kobold.display_tile = Glyph('k', 3, 0)
+kobold.display_tile = Glyph('k', (102, 68, 0), (0, 0, 0))
 kobold.speed = 2.0
 kobold.target = player
 
@@ -54,23 +53,29 @@ move_binds = {
 	'Down':  ( 0,  1)
 }
 
+def update_UI():
+	# Build intermediate render object from tile map and add player
+	intermediate_grid = tiles.map(tilemappings.visual_map_func)
+	for e in entities.contents:
+		intermediate_grid[e.position] = e.display_tile
+	# Send our intermediate grid off to be rendered
+	UI.render_grid(intermediate_grid)
+
 # Main loop
 
 ui_mode = Mode.MAIN
 current_menu = None
 quit = False
 
+update_UI()
+
 current_time = time.time()
 tick_rate = 1/60
-while not quit:
+while UI.is_alive() and not quit:
 	current_time = time.time()
 	if len(UI.events) > 0:
 		event = UI.events.pop(0)
-		key = None
-		try:
-			key = chr(event.key_code)
-		except:
-			key = event.key_code
+		key = event
 		if key == 'p': quit = True
 		UI.add_announcement(str(key))
 
@@ -101,14 +106,9 @@ while not quit:
 					current_menu.pointer += 1
 				elif key == 'k':
 					current_menu.pointer -= 1
-			UI.set_text(current_menu.to_string())
+			UI.set_text(str(current_menu))
 
 		if ui_mode == Mode.MAIN:
-			# Build intermediate render object from tile map and add player
-			intermediate_grid = tiles.map(tilemappings.visual_map_func)
-			for e in entities.contents:
-				intermediate_grid[e.position] = e.display_tile
-			# Send our intermediate grid off to be rendered
-			UI.render_grid(intermediate_grid)
+			update_UI()
 	else:
 		time.sleep(tick_rate - (time.time() - current_time))
