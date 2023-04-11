@@ -96,8 +96,81 @@ class TileContainer:
 
 		return came_from
 
+	def dijkstra(self, start, goal = None):
+		#visits = 0
+		start = tuple(start)
+		goal = tuple(goal)
+
+		frontier = [(start, 0)]
+		came_from = {}
+		came_from[start] = True
+		path_cost = { start: 0 }
+
+		while frontier:
+			current = frontier.pop(0)[0]
+
+			if current == goal:
+				break
+
+			for node in self.get_neighbors(current[0], current[1]):
+				#visits += 1
+				node_cost = self.contents[node].traversal_cost()
+				if node[0] != current[0] and node[1] != current[1]:
+					node_cost *= 1.4 # Increase costs for diagonal movement
+				node_cost += path_cost[current]
+
+				if node not in path_cost or node_cost < path_cost[node]:
+					path_cost[node] = node_cost
+					x = 0
+					for i in range(0, len(frontier)):
+						if frontier[i][1] < node_cost:
+							x = i
+					frontier.insert(x, (node, node_cost))
+					came_from[node] = current
+
+		#print("Visits: " + str(visits))
+		return came_from
+
+	def heuristic(self, start, goal = None):
+		start = tuple(start)
+		goal = tuple(goal)
+
+		frontier = [(start, 0)]
+		came_from = {}
+		came_from[start] = True
+		path_cost = { start: 0 }
+
+		while frontier:
+			current = frontier.pop(0)[0]
+
+			if current == goal:
+				break
+
+			for node in self.get_neighbors(current[0], current[1]):
+				node_cost = self.contents[node].traversal_cost()
+				if node[0] != current[0] and node[1] != current[1]:
+					node_cost = int(node_cost * 1.4) # Increase costs for diagonal movement
+				node_cost += path_cost[current]
+
+				if node not in path_cost or node_cost < path_cost[node]:
+					path_cost[node] = node_cost
+					x_dist = abs(node[0] - goal[0])
+					y_dist = abs(node[1] - goal[1])
+					heuristic_dist = int((x_dist + y_dist - (min(x_dist, y_dist) * 0.6)) * 10)
+					priority = heuristic_dist + node_cost
+					x = 0
+					for i in range(0, len(frontier)):
+						x = i
+						if frontier[i][1] > priority:
+							break
+						x += 1
+					frontier.insert(x, (node, priority))
+					came_from[node] = current
+
+		return came_from
+
 	def next_step_towards(self, start, goal):
-		paths = self.breadth_first_search(goal, start)
+		paths = self.heuristic(goal, start)
 		return paths[start]
 
 	def map(self, func):

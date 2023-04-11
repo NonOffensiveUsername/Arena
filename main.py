@@ -10,7 +10,7 @@ import loader
 import time
 
 mat_dict = loader.load_materials()
-tiles = loader.load_map(mat_dict)
+tiles = loader.load_map(mat_dict, "map")
 
 #tiles.construct_opacity_grid()
 
@@ -73,11 +73,11 @@ current_time = time.time()
 tick_rate = 1/60
 while UI.is_alive() and not quit:
 	current_time = time.time()
+
 	if len(UI.events) > 0:
 		event = UI.events.pop(0)
 		key = event
 		if key == 'p': quit = True
-		UI.add_announcement(str(key))
 
 		if ui_mode == Mode.MAIN:
 			do_process = False
@@ -96,7 +96,9 @@ while UI.is_alive() and not quit:
 				event = None
 
 			if do_process:
+				process_start = time.time()
 				entities.process(tiles)
+				UI.add_announcement("Processed entities in " + str(time.time() - process_start))
 			
 		if ui_mode == Mode.MENU:
 			if event: # Event could be None

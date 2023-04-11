@@ -60,3 +60,14 @@ def round_half_down(num):
 
 def dist_between(a, b):
 	return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
+
+def dir_between(a, b):
+	if type(a) == tuple and type(b) == tuple:
+		x = a[0] - b[0]
+		if x != 0:
+			x //= abs(x)
+		y = a[1] - b[1]
+		if y != 0:
+			y //= abs(y)
+		return (x, y)
+	return None

@@ -60,7 +60,9 @@ class Window():
 		dll.SDL_UpdateWindowSurface(self.window)
 
 	def print_glyph(self, glyph, x, y, fg = (255, 255, 255), bg = (0, 0, 0)):
-		char = ord(glyph)
+		char = glyph
+		if type(char) != int:
+			char = ord(glyph)
 		src_rect = SDL_Rect(char % 32 * 8, char // 32 * 16, 8, 16)
 		dst_rect = SDL_Rect(x * 8, y * 16, 8, 16)
 		dll.SDL_FillRect(self.surface, dst_rect, rgb_to_int(bg))

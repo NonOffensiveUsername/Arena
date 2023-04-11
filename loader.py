@@ -15,19 +15,22 @@ def load_materials():
 
 	return mats
 
-def load_map(materials):
+def load_map(materials, map_name):
 	tile_defs_file = open("data/tile_defs.json")
 	tile_defs = json.loads(tile_defs_file.read())
 	tile_defs_file.close()
 
-	map_file = open("data/map.map")
-	map_raw = map_file.read().replace("\n", "")
+	map_file = open("data/" + map_name + ".map")
+	map_raw = map_file.read()
+	width = len(map_raw.partition('\n')[0])
+	height = map_raw.count('\n') + 1
+	map_raw = map_raw.replace("\n", "")
 	map_file.close()
 
-	tiles = tile.TileContainer({}, 60, 20)
+	tiles = tile.TileContainer({}, width, height)
 	for z in range(0, len(map_raw)):
-		x = z % 60
-		y = z // 60
+		x = z % width
+		y = z // width
 		glyph = map_raw[z]
 		wall_mat_name = tile_defs[glyph]["wall_material"]
 		wall_mat = materials[wall_mat_name]

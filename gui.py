@@ -1,5 +1,7 @@
 from threading import Thread
+from structs import *
 import sdl
+import util
 
 class Interface(Thread):
 
@@ -14,14 +16,15 @@ class Interface(Thread):
 		self.window = sdl.Window("test", 200, 200, 800, 400) # 100x25 glyphs
 		self.window.flush()
 		self.window.update()
+		self.character_buffer = {}
 
 		self.events = []
 		self.announcements = [
-			"Test 1",
-			"Test 2",
-			"Test 3",
-			"test 4",
-			"Test 5"
+			"",
+			"",
+			"",
+			"",
+			""
 		]
 
 		self.isInitialized = True
@@ -36,7 +39,16 @@ class Interface(Thread):
 			y = coord[1]
 			glyph = grid[coord]
 			self.window.print_glyph(glyph.character, x, y, glyph.fg, glyph.bg)
+			self.character_buffer[coord] = glyph.character
 		self.draw_announcements()
+		self.window.update()
+
+	def overlay_path(self, path):
+		for coord in path:
+			char = ' '
+			if coord in self.character_buffer:
+				char = self.character_buffer[coord]
+			self.window.print_glyph(char, coord[0], coord[1], (0, 0, 0), (0, 0, 255))
 		self.window.update()
 
 	def set_text(self, text):
