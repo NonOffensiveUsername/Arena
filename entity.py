@@ -2,8 +2,7 @@ import random
 import util
 
 class Entity:
-	def __init__(self, hitDice, name, position, material):
-		self.hitDice = hitDice # Decide: Should hit dice be strings or an object?
+	def __init__(self, name, position, material):
 		self.name = name
 		self.contents = []
 		self.position = position
@@ -30,11 +29,12 @@ class Entity:
 		new_position = (direction[0] + self.position[0], direction[1] + self.position[1])
 		target_tile = game_state.get_tile(new_position[0], new_position[1])
 		cost = target_tile.traversal_cost()
-		if cost >= 0:
+		if traversible := cost >= 0:
 			self.apply_delta(direction)
 			self.delay = cost * self.speed
 		else:
 			self.delay = 10 * self.speed
+		return traversible
 
 	def calculate_hp(self):
 		multiplier = 1

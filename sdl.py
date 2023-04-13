@@ -27,13 +27,13 @@ dll.SDL_LoadBMP_RW.restype = nullptr
 stream = dll.SDL_RWFromFile(b"data/glyphs_8x16.bmp", b"rb")
 glyph_sheet = dll.SDL_LoadBMP_RW(stream, 1)
 dll.SDL_SetColorKey(glyph_sheet, 1, 0x00000000)
-# This just doesn't work so I guess we simply won't free the resource???
-# What could go wrong lol
-# dll.SDL_RWclose(stream)
 
+# May have to grab color format from SDL for portability
 def rgb_to_int(rgb):
 	return rgb[2] + 0x100 * rgb[1] + 0x10000 * rgb[0]
 
+# Struct for passing coordinates to SDL functions
+# This should never be required outside this file
 class SDL_Rect(Structure):
 	_fields_ = [
 		("x", c_int),
@@ -47,6 +47,7 @@ class Window():
 		self.window = dll.SDL_CreateWindow(bytes(title, 'utf-8'), x, y, w, h, flags)
 		self.surface = dll.SDL_GetWindowSurface(self.window)
 		# SDL code suggests that 56 bytes is the maximum size of a returned event union
+		# TODO: create a struct for events
 		self.event = create_string_buffer(56)
 		self.quit = False
 		self.width = w // 8
@@ -56,19 +57,23 @@ class Window():
 		# Color format is 32 bit ARGB
 		dll.SDL_FillRect(self.surface, None, color)
 
+	def clear_rect(self, x, y, w, h, color = 0x00000000):
+		target_rect = SDL_Rect(x * 8, y * 16, w * 8, h * 16)
+		dll.SDL_FillRect(self.surface, target_rect, color)
+
+	# This should be the only place the window is actually updated
 	def update(self):
 		dll.SDL_UpdateWindowSurface(self.window)
 
-	def print_glyph(self, glyph, x, y, fg = (255, 255, 255), bg = (0, 0, 0)):
-		char = glyph
-		if type(char) != int:
-			char = ord(glyph)
+	# char is the position of the desired character in the code page as an integer
+	# can be retrieved from Glyph objects with .code()
+	def print_glyph(self, char, x, y, fg = (255, 255, 255), bg = (0, 0, 0)):
 		src_rect = SDL_Rect(char % 32 * 8, char // 32 * 16, 8, 16)
 		dst_rect = SDL_Rect(x * 8, y * 16, 8, 16)
 		dll.SDL_FillRect(self.surface, dst_rect, rgb_to_int(bg))
-		dll.SDL_SetSurfaceColorMod(glyph_sheet, fg[0], fg[1], fg[2])
+		dll.SDL_SetSurfaceColorMod(glyph_sheet, *fg)
 		dll.SDL_UpperBlit(glyph_sheet, src_rect, self.surface, dst_rect)
-		dll.SDL_SetSurfaceColorMod(glyph_sheet, 255, 255, 255)
+		# This is the only place blits happen so no need to reset the color mod every time
 
 	def print_string(self, string, x, y, wrap = False):
 		x_offset = 0
@@ -83,7 +88,7 @@ class Window():
 				y_offset += 1
 				x_offset = -i
 			else:
-				self.print_glyph(string[i], x + x_offset + i, y + y_offset)
+				self.print_glyph(ord(string[i]), x + x_offset + i, y + y_offset)
 		return y_offset
 
 	def poll(self):

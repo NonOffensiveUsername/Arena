@@ -15,13 +15,13 @@ tiles = loader.load_map(mat_dict, "map")
 #tiles.construct_opacity_grid()
 
 # Creating test player entity
-player = Entity("1d6", "Player", (5, 5), mat_dict["flesh"])
+player = Entity("Player", (5, 5), mat_dict["flesh"])
 player.display_tile = Glyph("@", (255, 0, 0), (0, 0, 0))
 player.is_player = True
-feloid = entity.RandomWalker("1d4", "Feloid Wanderer", (17, 8), mat_dict["flesh"])
+feloid = entity.RandomWalker("Feloid Wanderer", (17, 8), mat_dict["flesh"])
 feloid.display_tile = Glyph("f", (255, 130, 20), (0, 0, 0))
 feloid.speed = 0.5
-kobold = entity.Chaser("1d4", "Kobold Chaser", (15, 6), mat_dict["flesh"])
+kobold = entity.Chaser("Kobold Chaser", (15, 6), mat_dict["flesh"])
 kobold.display_tile = Glyph('k', (102, 68, 0), (0, 0, 0))
 kobold.speed = 2.0
 kobold.target = player
@@ -65,27 +65,23 @@ def update_UI():
 
 ui_mode = Mode.MAIN
 current_menu = None
-quit = False
 
 update_UI()
 
 current_time = time.time()
 tick_rate = 1/60
-while UI.is_alive() and not quit:
+while UI.is_alive():
 	current_time = time.time()
 
 	if len(UI.events) > 0:
 		event = UI.events.pop(0)
 		key = event
-		if key == 'p': quit = True
+		if key == 'p': break
 
 		if ui_mode == Mode.MAIN:
 			do_process = False
 			if key in move_binds:
-				new_position = (player.position[0] + move_binds[key][0], player.position[1] + move_binds[key][1])
-				if tiles.get_tile(new_position[0], new_position[1]).traversal_cost() >= 0:
-					player.move(tiles, move_binds[key])
-					do_process = True
+				do_process = player.move(tiles, move_binds[key])
 			elif key == 's':
 				player.delay = 10
 				do_process = True

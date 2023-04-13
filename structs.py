@@ -42,10 +42,14 @@ class Material:
 		self.smooth = smooth
 
 class Glyph:
-	def __init__(self, character, fg, bg):
+	def __init__(self, character, fg = (255, 255, 255), bg = (0, 0, 0)):
 		self.character = character
 		self.fg = fg
 		self.bg = bg
+
+	# Gets the actual integer representing the character's position on the code page
+	def code(self):
+		return ord(self.character)
 
 class Language:
 	def __init__(self, vocabulary, interjections, sentenceMin, sentenceMax, interjectionFrequency):

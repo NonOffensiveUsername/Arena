@@ -53,6 +53,7 @@ class TileContainer:
 		self.width = width
 		self.height = height
 		self.opacity_grid = {}
+		self.voidtile = VoidTile()
 
 	def construct_opacity_grid(self):
 		self.opacity_grid = self.map(tilemappings.opacity)
@@ -61,15 +62,12 @@ class TileContainer:
 		return 0 <= x < self.width and 0 <= y < self.height
  
 	def get_neighbors(self, x, y):
-		dirs = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
-		#dirs = [[-1, 0], [0, -1], [0, 1], [1, 0]]
 		neighbors = []
-		for direction in dirs:
+		for direction in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)):
 			neighbor_x = x + direction[0]
 			neighbor_y = y + direction[1]
 			if self.is_in_grid(neighbor_x, neighbor_y):
 				cost = self.get_tile(neighbor_x, neighbor_y).traversal_cost()
-				#neighbors.append((neighbor_x, neighbor_y, weight))
 				if cost >= 0:
 					neighbors.append((neighbor_x, neighbor_y))
 		return neighbors
@@ -96,41 +94,6 @@ class TileContainer:
 
 		return came_from
 
-	def dijkstra(self, start, goal = None):
-		#visits = 0
-		start = tuple(start)
-		goal = tuple(goal)
-
-		frontier = [(start, 0)]
-		came_from = {}
-		came_from[start] = True
-		path_cost = { start: 0 }
-
-		while frontier:
-			current = frontier.pop(0)[0]
-
-			if current == goal:
-				break
-
-			for node in self.get_neighbors(current[0], current[1]):
-				#visits += 1
-				node_cost = self.contents[node].traversal_cost()
-				if node[0] != current[0] and node[1] != current[1]:
-					node_cost *= 1.4 # Increase costs for diagonal movement
-				node_cost += path_cost[current]
-
-				if node not in path_cost or node_cost < path_cost[node]:
-					path_cost[node] = node_cost
-					x = 0
-					for i in range(0, len(frontier)):
-						if frontier[i][1] < node_cost:
-							x = i
-					frontier.insert(x, (node, node_cost))
-					came_from[node] = current
-
-		#print("Visits: " + str(visits))
-		return came_from
-
 	def heuristic(self, start, goal = None):
 		start = tuple(start)
 		goal = tuple(goal)
@@ -146,7 +109,7 @@ class TileContainer:
 			if current == goal:
 				break
 
-			for node in self.get_neighbors(current[0], current[1]):
+			for node in self.get_neighbors(*current):
 				node_cost = self.contents[node].traversal_cost()
 				if node[0] != current[0] and node[1] != current[1]:
 					node_cost = int(node_cost * 1.4) # Increase costs for diagonal movement
@@ -183,7 +146,7 @@ class TileContainer:
 		if (x, y) in self.contents:
 			return self.contents[(x, y)]
 		else:
-			return VoidTile()
+			return self.voidtile
 
 	def set_tile(self, x, y, tile):
 		self.contents[(x, y)] = tile.copy()
