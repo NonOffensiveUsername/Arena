@@ -56,10 +56,14 @@ class Interface(Thread):
 		self.window.print_string(text, 0, 0)
 		self.window.update()
 
-	def add_announcement(self, announcement):
+	def add_announcement(self, announcement, redraw = False):
 		self.announcements.append(announcement)
 		self.announcements.pop(0)
+		if redraw:
+			self.draw_announcements()
+			self.window.update()
 
 	def draw_announcements(self):
+		self.window.clear_rect(0, 20, 100, 5)
 		for e in range(0, 5):
 			self.window.print_string(self.announcements[e], 0, 20 + e)

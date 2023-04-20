@@ -2,7 +2,7 @@
 	{
 		"name":"stone",
 		"state":"solid",
-		"density":10,
+		"density":2,
 		"hardness":5,
 		"opacity":1,
 		"texture":"X",
@@ -14,7 +14,7 @@
 	{
 		"name":"dirt",
 		"state":"solid",
-		"density":3,
+		"density":1.5,
 		"hardness":0,
 		"opacity":1,
 		"texture":"%",
@@ -25,7 +25,7 @@
 	{
 		"name":"wood",
 		"state":"solid",
-		"density":3,
+		"density":1,
 		"hardness":3,
 		"opacity":1,
 		"texture":"O",

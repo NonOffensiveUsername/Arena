@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 
 # Given two points, return a list of points representing a line between them
 # TODO: Heavy cleanup, more thorough testing, simplification
@@ -71,3 +72,40 @@ def dir_between(a, b):
 			y //= abs(y)
 		return (x, y)
 	return None
+
+def tup_add(a, b):
+	return (a[0] + b[0], a[1] + b[1])
+
+def is_diag(vec):
+	return vec[0] != 0 and vec[1] != 0
+
+# Takes two dictionaries as arguments
+# Copies a and overwrites b onto the copy
+# The new dict is returned
+def dict_overwrite(a, b):
+	new_dict = deepcopy(a)
+	for k in new_dict:
+		if k in b:
+			if type(b[k]) != dict:
+				new_dict[k] = b[k]
+			else:
+				new_dict[k] = dict_overwrite(new_dict[k], b[k])
+	return new_dict
+
+#if __name__ == "__main__":
+#	a = {
+#		"test": 5,
+#		"test2": 7,
+#		"test3": {
+#			"woag": 99,
+#			"woazers": 3
+#		}
+#	}
+#	b = {
+#		"test2": 9,
+#		"test3": {
+#			"woazers": 2
+#		}
+#	}
+#	c = dict_overwrite(a, b)
+#	print(c)

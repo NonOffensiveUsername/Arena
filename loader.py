@@ -42,3 +42,11 @@ def load_map(materials, map_name):
 		tiles.contents[(x, y)] = new_tile
 
 	return tiles
+
+def load_templates():
+	templates_file = open("data/templates.json")
+	templates_raw = templates_file.read()
+	templates_file.close()
+	templates = json.loads(templates_raw)
+
+	return templates

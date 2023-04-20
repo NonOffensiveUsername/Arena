@@ -1,6 +1,11 @@
 from ctypes import *
 import os
 
+ROW_HEIGHT = 16
+COLUMN_WIDTH = 8
+SCALE_FACTOR = 2
+COLOR_KEY = 0x00FF00FF
+
 # Tell windows we're DPI aware to prevent stretching and blurring
 try:
 	windll.shcore.SetProcessDpiAwareness (True)
@@ -26,7 +31,7 @@ dll.SDL_LoadBMP_RW.restype = nullptr
 # Load font
 stream = dll.SDL_RWFromFile(b"data/glyphs_8x16.bmp", b"rb")
 glyph_sheet = dll.SDL_LoadBMP_RW(stream, 1)
-dll.SDL_SetColorKey(glyph_sheet, 1, 0x00000000)
+dll.SDL_SetColorKey(glyph_sheet, 1, COLOR_KEY)
 
 # May have to grab color format from SDL for portability
 def rgb_to_int(rgb):
@@ -50,15 +55,15 @@ class Window():
 		# TODO: create a struct for events
 		self.event = create_string_buffer(56)
 		self.quit = False
-		self.width = w // 8
-		self.height = h // 16
+		self.width = w // COLUMN_WIDTH
+		self.height = h // ROW_HEIGHT
 
 	def flush(self, color = 0x00000000):
 		# Color format is 32 bit ARGB
 		dll.SDL_FillRect(self.surface, None, color)
 
 	def clear_rect(self, x, y, w, h, color = 0x00000000):
-		target_rect = SDL_Rect(x * 8, y * 16, w * 8, h * 16)
+		target_rect = SDL_Rect(x * COLUMN_WIDTH, y * ROW_HEIGHT, w * COLUMN_WIDTH, h * ROW_HEIGHT)
 		dll.SDL_FillRect(self.surface, target_rect, color)
 
 	# This should be the only place the window is actually updated
@@ -69,8 +74,9 @@ class Window():
 	# can be retrieved from Glyph objects with .code()
 	def print_glyph(self, char, x, y, fg = (255, 255, 255), bg = (0, 0, 0)):
 		src_rect = SDL_Rect(char % 32 * 8, char // 32 * 16, 8, 16)
-		dst_rect = SDL_Rect(x * 8, y * 16, 8, 16)
-		dll.SDL_FillRect(self.surface, dst_rect, rgb_to_int(bg))
+		dst_rect = SDL_Rect(x * COLUMN_WIDTH, y * ROW_HEIGHT, 8, 16)
+		if bg != (0, 0, 0):
+			dll.SDL_FillRect(self.surface, dst_rect, rgb_to_int(bg))
 		dll.SDL_SetSurfaceColorMod(glyph_sheet, *fg)
 		dll.SDL_UpperBlit(glyph_sheet, src_rect, self.surface, dst_rect)
 		# This is the only place blits happen so no need to reset the color mod every time

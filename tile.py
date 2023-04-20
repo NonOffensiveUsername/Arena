@@ -10,9 +10,9 @@ class Tile:
 	# Movement point cost of moving through the tile
 	def traversal_cost(self, flyer = False):
 		if self.wall_material.state == State.GAS:
-			return 10
+			return 100
 		elif self.wall_material.state == State.LIQUID:
-			return 30
+			return 300
 		else:
 			return -1
 
@@ -139,7 +139,7 @@ class TileContainer:
 	def map(self, func):
 		result = {}
 		for x in self.contents:
-			result[x] = func(self.contents[x])
+			result[x] = func(self.contents, x)
 		return result
 
 	def get_tile(self, x, y):

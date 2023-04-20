@@ -1,0 +1,37 @@
+{
+	"human": {},
+	"feloid": {
+		"attribute": {
+			"size": -1,
+			"ST": 8,
+			"DX": 12
+		},
+		"trait": {
+			"speed_boost": 0.5
+		},
+		"display": {
+			"character": "f",
+			"fg": [255, 130, 20]
+		}
+	},
+	"kobold": {
+		"attribute": {
+			"size": -1,
+			"ST": 9,
+			"DX": 8
+		},
+		"display": {
+			"character": "k",
+			"fg": [102, 68, 0]
+		}
+	},
+	"elf": {
+		"attribute": {
+			"DX": 11,
+			"IQ": 11
+		},
+		"display": {
+			"character": "e"
+		}
+	}
+}

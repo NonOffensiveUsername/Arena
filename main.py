@@ -10,24 +10,20 @@ import loader
 import time
 
 mat_dict = loader.load_materials()
+template_dict = loader.load_templates()
+Entity.DEFAULT_MAT = mat_dict["flesh"]
 tiles = loader.load_map(mat_dict, "map")
 
-#tiles.construct_opacity_grid()
-
-# Creating test player entity
-player = Entity("Player", (5, 5), mat_dict["flesh"])
-player.display_tile = Glyph("@", (255, 0, 0), (0, 0, 0))
-player.is_player = True
-feloid = entity.RandomWalker("Feloid Wanderer", (17, 8), mat_dict["flesh"])
-feloid.display_tile = Glyph("f", (255, 130, 20), (0, 0, 0))
-feloid.speed = 0.5
-kobold = entity.Chaser("Kobold Chaser", (15, 6), mat_dict["flesh"])
-kobold.display_tile = Glyph('k', (102, 68, 0), (0, 0, 0))
-kobold.speed = 2.0
+# Test entities
+player = Entity("Player", (5, 5), is_player = True)
+feloid = entity.RandomWalker("Feloid Wanderer", (17, 8), template_dict["feloid"])
+kobold = entity.Chaser("Kobold Chaser", (15, 6), template_dict["kobold"])
 kobold.target = player
 
 entities = EntityContainer()
-entities.contents = [player, kobold, feloid]
+entities.add_entity(player)
+entities.add_entity(kobold)
+entities.add_entity(feloid)
 
 # Creating the UI
 UI = Interface()
@@ -35,9 +31,7 @@ UI = Interface()
 while not UI.isInitialized:
 	pass
 
-# Keys associated with movement directions, to be read from file
-# Input config file should have lines something like this:
-# bind 'h' move -1 0
+# Keys associated with movement directions
 move_binds = {
 	'h': (-1,  0),
 	'j': ( 0,  1),
@@ -47,19 +41,33 @@ move_binds = {
 	'u': ( 1, -1),
 	'b': (-1,  1),
 	'n': ( 1,  1),
-	'Right': ( 1,  0),
-	'Left':  (-1,  0),
-	'Up':    ( 0, -1),
-	'Down':  ( 0,  1)
 }
 
 def update_UI():
-	# Build intermediate render object from tile map and add player
 	intermediate_grid = tiles.map(tilemappings.visual_map_func)
 	for e in entities.contents:
 		intermediate_grid[e.position] = e.display_tile
-	# Send our intermediate grid off to be rendered
+	for e in entities.pop_events():
+		UI.add_announcement(e.visual)
 	UI.render_grid(intermediate_grid)
+
+TICK_RATE = 1/60
+def poll():
+	cur_time = None
+	while UI.is_alive():
+		cur_time = time.time()
+		if UI.events:
+			return UI.events.pop(0)
+		else:
+			time.sleep(TICK_RATE - (time.time() - cur_time))
+	return False
+
+def get_dir():
+	while key := poll():
+		if key in move_binds:
+			return move_binds[key]
+		elif key == 's': break
+	return None
 
 # Main loop
 
@@ -68,33 +76,38 @@ current_menu = None
 
 update_UI()
 
-current_time = time.time()
-tick_rate = 1/60
 while UI.is_alive():
-	current_time = time.time()
-
 	if len(UI.events) > 0:
 		event = UI.events.pop(0)
 		key = event
 		if key == 'p': break
 
 		if ui_mode == Mode.MAIN:
-			do_process = False
 			if key in move_binds:
-				do_process = player.move(tiles, move_binds[key])
+				if not player.move(tiles, move_binds[key]): continue
 			elif key == 's':
 				player.delay = 10
-				do_process = True
 			elif key == 'c':
 				ui_mode = Mode.MENU
 				current_menu = Menu("cast_menu", "Cast Spell:", ['Fireball', 'Invisibility', 'Heal'])
-				# Execution will run off to the next if block, we clear the current event so it isn't used as input in the created menu
-				event = None
+				UI.set_text(str(current_menu))
+				continue
+			elif key == 'a':
+				UI.add_announcement("Attack where? (dir key or s to cancel)", redraw = True)
+				direction = get_dir()
+				if direction:
+					target = (player.position[0] + direction[0], player.position[1] + direction[1])
+					e = entities.find_at(target)
+					if e:
+						player.send_attack(e[0])
+					else:
+						UI.add_announcement("Whoosh!", redraw = True)
+						player.delay += 10
+				else:
+					UI.add_announcement("Cancelled", redraw = True)
+					continue
 
-			if do_process:
-				process_start = time.time()
-				entities.process(tiles)
-				UI.add_announcement("Processed entities in " + str(time.time() - process_start))
+			entities.process(tiles)
 			
 		if ui_mode == Mode.MENU:
 			if event: # Event could be None
@@ -108,5 +121,3 @@ while UI.is_alive():
 
 		if ui_mode == Mode.MAIN:
 			update_UI()
-	else:
-		time.sleep(tick_rate - (time.time() - current_time))
