@@ -15,9 +15,9 @@ Entity.DEFAULT_MAT = mat_dict["flesh"]
 tiles = loader.load_map(mat_dict, "map")
 
 # Test entities
-player = Entity("Player", (5, 5), is_player = True)
-feloid = entity.RandomWalker("Feloid Wanderer", (17, 8), template_dict["feloid"])
-kobold = entity.Chaser("Kobold Chaser", (15, 6), template_dict["kobold"])
+player = Entity.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
+feloid = entity.RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
+kobold = entity.Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
 kobold.target = player
 
 entities = EntityContainer()
@@ -45,7 +45,7 @@ move_binds = {
 
 def update_UI():
 	intermediate_grid = tiles.map(tilemappings.visual_map_func)
-	for e in entities.contents:
+	for e in sorted(entities.contents, key = lambda x: x.size):
 		intermediate_grid[e.position] = e.display_tile
 	for e in entities.pop_events():
 		UI.add_announcement(e.visual)
@@ -80,6 +80,8 @@ while UI.is_alive():
 	if len(UI.events) > 0:
 		event = UI.events.pop(0)
 		key = event
+		if key == 'q':
+			print(kobold.soul)
 		if key == 'p': break
 
 		if ui_mode == Mode.MAIN:

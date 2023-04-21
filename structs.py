@@ -89,6 +89,7 @@ class Glyph:
 		self.bg = tuple(bg)
 
 	# Gets the actual integer representing the character's position on the code page
+	@property
 	def code(self):
 		if type(self.character) == int:
 			return self.character

@@ -1,4 +1,5 @@
 import math
+import random
 from copy import deepcopy
 
 # Given two points, return a list of points representing a line between them
@@ -72,6 +73,9 @@ def dir_between(a, b):
 			y //= abs(y)
 		return (x, y)
 	return None
+
+def rand_dir():
+	return random.choice(((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)))
 
 def tup_add(a, b):
 	return (a[0] + b[0], a[1] + b[1])

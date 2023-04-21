@@ -38,7 +38,7 @@ class Interface(Thread):
 			x = coord[0]
 			y = coord[1]
 			glyph = grid[coord]
-			self.window.print_glyph(glyph.code(), x, y, glyph.fg, glyph.bg)
+			self.window.print_glyph(glyph.code, x, y, glyph.fg, glyph.bg)
 			self.character_buffer[coord] = glyph.character
 		self.draw_announcements()
 		self.window.update()

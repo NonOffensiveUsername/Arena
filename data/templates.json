@@ -1,5 +1,18 @@
 {
 	"human": {},
+	"demigod": {
+		"attribute": {
+			"size": 2,
+			"ST": 14,
+			"DX": 14,
+			"HT": 14,
+			"IQ": 14
+		},
+		"display": {
+			"character": 2,
+			"fg": [200, 200, 200]
+		}
+	},
 	"feloid": {
 		"attribute": {
 			"size": -1,
