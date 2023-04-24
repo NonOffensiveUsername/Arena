@@ -3,7 +3,7 @@ import os
 
 ROW_HEIGHT = 16
 COLUMN_WIDTH = 8
-SCALE_FACTOR = 2
+#SCALE_FACTOR = 2
 COLOR_KEY = 0x00FF00FF
 
 # Tell windows we're DPI aware to prevent stretching and blurring
@@ -62,10 +62,6 @@ class Window():
 		# Color format is 32 bit ARGB
 		dll.SDL_FillRect(self.surface, None, color)
 
-	def clear_rect(self, x, y, w, h, color = 0x00000000):
-		target_rect = SDL_Rect(x * COLUMN_WIDTH, y * ROW_HEIGHT, w * COLUMN_WIDTH, h * ROW_HEIGHT)
-		dll.SDL_FillRect(self.surface, target_rect, color)
-
 	# This should be the only place the window is actually updated
 	def update(self):
 		dll.SDL_UpdateWindowSurface(self.window)
@@ -75,34 +71,26 @@ class Window():
 	def print_glyph(self, char, x, y, fg = (255, 255, 255), bg = (0, 0, 0)):
 		src_rect = SDL_Rect(char % 32 * 8, char // 32 * 16, 8, 16)
 		dst_rect = SDL_Rect(x * COLUMN_WIDTH, y * ROW_HEIGHT, 8, 16)
-		if bg != (0, 0, 0):
-			dll.SDL_FillRect(self.surface, dst_rect, rgb_to_int(bg))
+		dll.SDL_FillRect(self.surface, dst_rect, rgb_to_int(bg))
 		dll.SDL_SetSurfaceColorMod(glyph_sheet, *fg)
 		dll.SDL_UpperBlit(glyph_sheet, src_rect, self.surface, dst_rect)
 		# This is the only place blits happen so no need to reset the color mod every time
-
-	def print_string(self, string, x, y, wrap = False):
-		x_offset = 0
-		y_offset = 0
-		z_offset = 0
-		for i in range(0, len(string)):
-			if wrap:
-				if x + i + x_offset >= self.width:
-					x_offset -= self.width
-					y_offset += 1
-			if string[i] == '\n':
-				y_offset += 1
-				x_offset = -i
-			else:
-				self.print_glyph(ord(string[i]), x + x_offset + i, y + y_offset)
-		return y_offset
 
 	def poll(self):
 		event_queue = []
 		while dll.SDL_PollEvent(byref(self.event)):
 			field = self.event.raw[0] + self.event.raw[1] * 0x100
 			if field == 0x300:
-				event_queue.append(chr(self.event.raw[20]))
+				keycode = self.event.raw[20]
+				if 97 <= keycode <= 122:
+					event_queue.append(chr(keycode))
+				elif keycode == 13:
+					event_queue.append('enter')
+				elif keycode == 96:
+					event_queue.append('grave')
+				elif keycode == 27:
+					event_queue.append('escape')
+				print(self.event.raw[20])
 			elif field == 0x100:
 				self.quit = True
 		return event_queue

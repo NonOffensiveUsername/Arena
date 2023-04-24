@@ -135,7 +135,7 @@ class Entity:
 
 		e.construct_body(full_template["bodyplan"])
 		e.traits = full_template["trait"]
-		self.is_alive = True
+		e.is_alive = True
 		e.calculate_secondaries()
 		e.hp = e.hp_max
 
@@ -325,6 +325,12 @@ class EntityContainer:
 		e = self.events.copy()
 		self.events = []
 		return e
+
+	def build_grid(self):
+		grid = {}
+		for e in sorted(self.contents, key = lambda x: x.size):
+			grid[e.position] = e.display_tile
+		return grid
 
 # Random target distibution test
 if __name__ == '__main__':

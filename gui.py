@@ -1,7 +1,7 @@
 from threading import Thread
 from structs import *
 import sdl
-import util
+from collections import ChainMap
 
 class Interface(Thread):
 
@@ -16,54 +16,47 @@ class Interface(Thread):
 		self.window = sdl.Window("test", 200, 200, 800, 400) # 100x25 glyphs
 		self.window.flush()
 		self.window.update()
-		self.character_buffer = {}
-
+		self.frame_buffer = ChainMap({}, {})
+		self.widgets = []
 		self.events = []
-		self.announcements = [
-			"",
-			"",
-			"",
-			"",
-			""
-		]
 
 		self.isInitialized = True
 
 		while not self.window.quit:
 			self.events += self.window.poll()
 
-	def render_grid(self, grid):
+	@property
+	def base(self):
+		return self.frame_buffer.maps[-1]
+
+	@base.setter
+	def base(self, value):
+		if type(value) != dict: raise TypeError(f"Frame buffer base expected dictionary, received {type(value)}")
+		self.frame_buffer.maps[-1] = value
+
+	@property
+	def entity_layer(self):
+		return self.frame_buffer[-2]
+
+	@entity_layer.setter
+	def entity_layer(self, value):
+		if type(value) != dict: raise TypeError(f"Frame buffer entity layer expected dictionary, receieved {type(value)}")
+		self.frame_buffer.maps[-2] = value
+
+	def register(self, widget):
+		self.widgets.append(widget)
+		self.frame_buffer.maps.insert(0, widget.buffer)
+
+	def pop_widget(self):
+		if len(self.widgets) > 0:
+			self.frame_buffer.maps.pop(0)
+			return self.widgets.pop()
+
+	def draw(self):
 		self.window.flush()
-		for coord in grid:
-			x = coord[0]
-			y = coord[1]
-			glyph = grid[coord]
-			self.window.print_glyph(glyph.code, x, y, glyph.fg, glyph.bg)
-			self.character_buffer[coord] = glyph.character
-		self.draw_announcements()
+		for widget in self.widgets:
+			widget.draw()
+		for coord in self.frame_buffer:
+			glyph = self.frame_buffer[coord]
+			self.window.print_glyph(glyph.code, *coord, glyph.fg, glyph.bg)
 		self.window.update()
-
-	def overlay_path(self, path):
-		for coord in path:
-			char = ' '
-			if coord in self.character_buffer:
-				char = self.character_buffer[coord]
-			self.window.print_glyph(ord(char), coord[0], coord[1], (0, 0, 0), (0, 0, 255))
-		self.window.update()
-
-	def set_text(self, text):
-		self.window.flush()
-		self.window.print_string(text, 0, 0)
-		self.window.update()
-
-	def add_announcement(self, announcement, redraw = False):
-		self.announcements.append(announcement)
-		self.announcements.pop(0)
-		if redraw:
-			self.draw_announcements()
-			self.window.update()
-
-	def draw_announcements(self):
-		self.window.clear_rect(0, 20, 100, 5)
-		for e in range(0, 5):
-			self.window.print_string(self.announcements[e], 0, 20 + e)

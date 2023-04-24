@@ -3,7 +3,7 @@ import entity
 from tile import Tile, TileContainer
 from structs import *
 from gui import Interface
-from menu import Menu
+import widget
 import tilemappings
 import util
 import loader
@@ -31,6 +31,9 @@ UI = Interface()
 while not UI.isInitialized:
 	pass
 
+shoutbox = widget.Shoutbox(0, 20, 100, 5)
+UI.register(shoutbox)
+
 # Keys associated with movement directions
 move_binds = {
 	'h': (-1,  0),
@@ -45,14 +48,15 @@ move_binds = {
 
 def update_UI():
 	intermediate_grid = tiles.map(tilemappings.visual_map_func)
-	for e in sorted(entities.contents, key = lambda x: x.size):
-		intermediate_grid[e.position] = e.display_tile
 	for e in entities.pop_events():
-		UI.add_announcement(e.visual)
-	UI.render_grid(intermediate_grid)
+		shoutbox.add_shout(e.primary)
+	UI.base = intermediate_grid
+	UI.entity_layer = entities.build_grid()
+	UI.draw()
 
 TICK_RATE = 1/60
 def poll():
+	update_UI()
 	cur_time = None
 	while UI.is_alive():
 		cur_time = time.time()
@@ -69,57 +73,64 @@ def get_dir():
 		elif key == 's': break
 	return None
 
-# Main loop
+def get_single_menu_selection(title, options):
+	menu = widget.SingleSelectMenu(3, 2, 20, 15, title = title, options = options)
+	UI.register(menu)
+	result = None
+	while key := poll():
+		if key == 'j':
+			menu.pointer += 1
+		elif key == 'k':
+			menu.pointer -= 1
+		elif key == 'a' or key == 'escape':
+			break
+		elif key == 'enter':
+			result = menu.pointer
+			break
+		menu.pointer %= len(menu.options)
+	UI.pop_widget()
+	return result
 
-ui_mode = Mode.MAIN
-current_menu = None
+# Main loop
 
 update_UI()
 
 while UI.is_alive():
-	if len(UI.events) > 0:
-		event = UI.events.pop(0)
-		key = event
-		if key == 'q':
-			print(kobold.soul)
-		if key == 'p': break
+	if len(UI.events) == 0:
+		continue
+	event = UI.events.pop(0)
+	key = event
+	if key == 'grave': # debug key, effect subject to change
+		UI.window.print_glyph(ord(' '), 10, 24, bg = (255, 0, 0))
+		UI.window.update()
+	elif key == 'escape':
+		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
+		if pause_option == 0: break
+	elif key == 'p':
+		break
+	elif key == 'e':
+		interaction_type = get_single_menu_selection("Interact:", ['Attack', 'Pet'])
+	elif key in move_binds:
+		if not player.move(tiles, move_binds[key]): continue
+	elif key == 's':
+		player.delay = 10
+	elif key == 'c':
+		x = get_single_menu_selection("Cast Spell:", ['Fireball', 'Invisibility', 'Heal'])
+		print(x)
+	elif key == 'a':
+		shoutbox.add_shout("Attack where? (dir key or s to cancel)")
+		direction = get_dir()
+		if direction:
+			target = (player.position[0] + direction[0], player.position[1] + direction[1])
+			e = entities.find_at(target)
+			if e:
+				player.send_attack(e[0])
+			else:
+				shoutbox.add_shout("Whoosh!")
+				player.delay += 10
+		else:
+			shoutbox.add_shout("Cancelled")
+			continue
 
-		if ui_mode == Mode.MAIN:
-			if key in move_binds:
-				if not player.move(tiles, move_binds[key]): continue
-			elif key == 's':
-				player.delay = 10
-			elif key == 'c':
-				ui_mode = Mode.MENU
-				current_menu = Menu("cast_menu", "Cast Spell:", ['Fireball', 'Invisibility', 'Heal'])
-				UI.set_text(str(current_menu))
-				continue
-			elif key == 'a':
-				UI.add_announcement("Attack where? (dir key or s to cancel)", redraw = True)
-				direction = get_dir()
-				if direction:
-					target = (player.position[0] + direction[0], player.position[1] + direction[1])
-					e = entities.find_at(target)
-					if e:
-						player.send_attack(e[0])
-					else:
-						UI.add_announcement("Whoosh!", redraw = True)
-						player.delay += 10
-				else:
-					UI.add_announcement("Cancelled", redraw = True)
-					continue
-
-			entities.process(tiles)
-			
-		if ui_mode == Mode.MENU:
-			if event: # Event could be None
-				if key == 'a':
-					ui_mode = Mode.MAIN
-				elif key == 'j':
-					current_menu.pointer += 1
-				elif key == 'k':
-					current_menu.pointer -= 1
-			UI.set_text(str(current_menu))
-
-		if ui_mode == Mode.MAIN:
-			update_UI()
+	entities.process(tiles)
+	update_UI()

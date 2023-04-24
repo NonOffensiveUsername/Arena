@@ -24,10 +24,6 @@ class Mood(Enum):
 	EXCITED = 2
 	BASHFUL = 3
 
-class Mode(Enum): # Get rid of this garbage ASAP
-	MAIN = 1
-	MENU = 2
-
 class DamageType(Enum):
 	BASH = "bash"
 	CUT = "cut"
@@ -52,10 +48,15 @@ class PartFlag(Enum):
 	SIMPLE = "simple"
 
 class Event():
-	def __init__(self, visual = None, sound = None, volume = 1.0):
+	def __init__(self, visual = None, sound = None, volume = 1.0, visual_priority = True):
 		self.visual = visual
 		self.sound = sound
 		self.volume = volume
+		self.visual_priority = visual_priority
+
+	@property
+	def primary(self):
+		return self.visual if self.visual_priority else self.sound
 
 class Attack():
 	def __init__(self, power, damage_type, accuracy, target = None, weapon = None, flags = ()):
