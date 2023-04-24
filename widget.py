@@ -58,6 +58,19 @@ class SingleSelectMenu(Widget):
 			string = f"|{arrow if i == self.pointer else ' '}" + self.options[i]
 			self.print(string, 1, i+1, wrap = False)
 
+class ListBox(Widget):
+	def __init__(self, x, y, w, h, title, entries = []):
+		self.title = title
+		self.entries = entries
+		super().__init__(x, y, w, h)
+
+	def draw(self):
+		self.fill()
+		self.frame()
+		self.print(self.title, 0, 0, wrap = False)
+		for i in range(len(self.entries)):
+			self.print(self.entries[i], 1, i+1, wrap = False)
+
 class Shoutbox(Widget):
 	def __init__(self, x, y, w, h):
 		self.shouts = ['', '', '', '', '']
@@ -71,3 +84,16 @@ class Shoutbox(Widget):
 		for i in range(5):
 			shout = self.shouts[-1-i]
 			self.print(shout, 0, 4-i, wrap = False)
+
+class Pointer(Widget):
+	def __init__(self, x, y):
+		super().__init__(x, y, 1, 1)
+
+	def nudge(self, direction):
+		x, y = direction
+		self.x += x
+		self.y += y
+
+	def draw(self):
+		self.buffer.clear()
+		self.buffer[(self.x, self.y)] = Glyph(' ', bg=(255, 0, 0))

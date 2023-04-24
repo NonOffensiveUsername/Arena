@@ -70,7 +70,7 @@ def get_dir():
 	while key := poll():
 		if key in move_binds:
 			return move_binds[key]
-		elif key == 's': break
+		elif key == 's' or key == 'escape': break
 	return None
 
 def get_single_menu_selection(title, options):
@@ -82,7 +82,7 @@ def get_single_menu_selection(title, options):
 			menu.pointer += 1
 		elif key == 'k':
 			menu.pointer -= 1
-		elif key == 'a' or key == 'escape':
+		elif key == 'escape':
 			break
 		elif key == 'enter':
 			result = menu.pointer
@@ -91,15 +91,35 @@ def get_single_menu_selection(title, options):
 	UI.pop_widget()
 	return result
 
+def pick_adjacent_entity():
+	neighbors = entities.get_neighbors(player)
+	names = [i.name or i in neighbors]
+	target = get_single_menu_selection("Target:", names)
+	if target is None: return None
+	return entities.contents[target]
+
+def examine():
+	pointer = widget.Pointer(*player.position)
+	entity_list = widget.ListBox(75, 0, 25, 25, "Located Here:")
+	UI.register(pointer)
+	UI.register(entity_list)
+	while key := poll():
+		if key in move_binds:
+			pointer.nudge(move_binds[key])
+			found_entities = entities.find_at((pointer.x, pointer.y))
+			entity_list.entries = [i.name for i in found_entities]
+		elif key == 'escape':
+			break
+	UI.pop_widget()
+	UI.pop_widget()
+
 # Main loop
 
 update_UI()
 
 while UI.is_alive():
-	if len(UI.events) == 0:
-		continue
-	event = UI.events.pop(0)
-	key = event
+	key = poll()
+
 	if key == 'grave': # debug key, effect subject to change
 		UI.window.print_glyph(ord(' '), 10, 24, bg = (255, 0, 0))
 		UI.window.update()
@@ -110,6 +130,11 @@ while UI.is_alive():
 		break
 	elif key == 'e':
 		interaction_type = get_single_menu_selection("Interact:", ['Attack', 'Pet'])
+		if interaction_type is None: continue
+		interaction_target = pick_adjacent_entity()
+		if interaction_target is None: continue
+	elif key == 'x':
+		examine()
 	elif key in move_binds:
 		if not player.move(tiles, move_binds[key]): continue
 	elif key == 's':

@@ -321,6 +321,18 @@ class EntityContainer:
 			if e.position == position: found.append(e)
 		return found
 
+	def find_in(self, positions):
+		found = []
+		for e in self.contents:
+			if e.position in positions: found.append(e)
+		return found
+
+	def get_neighbors(self, e):
+		targets = []
+		for direction in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)):
+			targets.append(util.tup_add(e.position, direction))
+		return self.find_in(targets)
+
 	def pop_events(self):
 		e = self.events.copy()
 		self.events = []
