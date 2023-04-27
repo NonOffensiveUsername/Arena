@@ -90,7 +90,7 @@ class Window():
 					event_queue.append('grave')
 				elif keycode == 27:
 					event_queue.append('escape')
-				print(self.event.raw[20])
+				#print(self.event.raw[20])
 			elif field == 0x100:
 				self.quit = True
 		return event_queue
