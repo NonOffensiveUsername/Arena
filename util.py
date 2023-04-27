@@ -52,6 +52,9 @@ def tup_add(a, b):
 def is_diag(vec):
 	return vec[0] != 0 and vec[1] != 0
 
+def color_mul(color, m):
+	return (int(color[0] * m), int(color[1] * m), int(color[2] * m))
+
 # Takes two dictionaries as arguments
 # Copies a and overwrites b onto the copy
 # The new dict is returned

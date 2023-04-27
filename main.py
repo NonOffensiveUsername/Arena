@@ -16,6 +16,7 @@ tiles = loader.load_map(mat_dict, "map")
 
 # Test entities
 player = Entity.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
+player.seen = set()
 feloid = entity.RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
 kobold = entity.Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
 kobold.target = player
@@ -47,12 +48,13 @@ move_binds = {
 }
 
 def update_UI():
-	intermediate_grid = tiles.map(tilemappings.visual_map_func)
+	intermediate_grid = tiles.map_visible(tilemappings.visual_map_func, player.position, player.seen)
 	for e in entities.pop_events():
 		shoutbox.add_shout(e.primary)
 	UI.base = intermediate_grid
 	UI.entity_layer = entities.build_grid()
 	UI.draw()
+	player.seen = player.seen.union(tiles.visible_from(player.position))
 
 TICK_RATE = 1/60
 def poll():
@@ -100,7 +102,7 @@ def pick_adjacent_entity():
 
 def examine():
 	pointer = widget.Pointer(*player.position)
-	entity_list = widget.ListBox(75, 0, 25, 25, "Located Here:")
+	entity_list = widget.ListBox(75, 0, 24, 24, "Located Here:")
 	UI.register(pointer)
 	UI.register(entity_list)
 	while key := poll():

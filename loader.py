@@ -23,7 +23,7 @@ def load_map(materials, map_name):
 	map_file = open("data/" + map_name + ".map")
 	map_raw = map_file.read()
 	width = len(map_raw.partition('\n')[0])
-	height = map_raw.count('\n') + 1
+	height = map_raw.count('\n')
 	map_raw = map_raw.replace("\n", "")
 	map_file.close()
 
@@ -39,7 +39,7 @@ def load_map(materials, map_name):
 		ceil_mat_name = tile_defs[glyph]["ceiling_material"]
 		ceil_mat = materials[ceil_mat_name]
 		new_tile = tile.Tile(wall_mat, floor_mat, ceil_mat)
-		tiles.contents[(x, y)] = new_tile
+		tiles.set_tile(x, y, new_tile)
 
 	return tiles
 

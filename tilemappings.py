@@ -1,5 +1,5 @@
 from structs import *
-from util import tup_add
+from util import tup_add, color_mul
 
 floor_glyphs = {
 	0: '.',
@@ -33,8 +33,9 @@ smooth_glyphs = {
 	(True, True, True, True): 206
 }
 
-def visual_map_func(tiles, position):
+def visual_map_func(tiles, position, brightness = 1.0):
 	tile = tiles[position]
+	result = None
 	if tile.wall_material.state == State.SOLID or tile.floor_material.state != State.SOLID:
 		if tile.wall_material.smooth:
 			neighbors = []
@@ -44,12 +45,16 @@ def visual_map_func(tiles, position):
 					neighbors.append(True)
 				else:
 					neighbors.append(False)
-			return Glyph(smooth_glyphs[tuple(neighbors)], tile.wall_material.fg, (0, 0, 0))
+			result = Glyph(smooth_glyphs[tuple(neighbors)], tile.wall_material.fg, (0, 0, 0))
 		else:
-			return Glyph(tile.wall_material.texture, tile.wall_material.fg, tile.wall_material.bg)
+			result = Glyph(tile.wall_material.texture, tile.wall_material.fg, tile.wall_material.bg)
 	else:
 		char = floor_glyphs[position.__hash__() % 10]
-		return Glyph(char, tile.floor_material.floor_color, (0, 0, 0))
+		result = Glyph(char, tile.floor_material.floor_color, (0, 0, 0))
+	result.bg = color_mul(result.bg, brightness)
+	result.fg = color_mul(result.fg, brightness)
+	return result
 
-def opacity(tile):
+def opacity(tiles, position):
+	tile = tiles[position]
 	return tile.wall_material.state == State.SOLID

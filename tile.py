@@ -1,5 +1,6 @@
 from structs import *
 import tilemappings
+import util
 
 class Tile:
 	def __init__(self, wall_material, floor_material, ceiling_material):
@@ -52,14 +53,34 @@ class TileContainer:
 		self.contents = contents
 		self.width = width
 		self.height = height
-		self.opacity_grid = {}
 		self.voidtile = VoidTile()
+		self.construct_opacity_grid()
 
 	def construct_opacity_grid(self):
 		self.opacity_grid = self.map(tilemappings.opacity)
 
+	def visible_from(self, position):
+		visible_tiles = set()
+		targets = []
+		# Cast rays from origin to each tile on the outer edge
+		# ensuring all tiles are hit at least once
+		for i in range(0, self.width):
+			targets.append((i, 0))
+			targets.append((i, self.height))
+		for i in range(0, self.height):
+			targets.append((0, i))
+			targets.append((self.width, i))
+		for t in targets:
+			line = util.bresenham_line(*position, *t)
+			opaque = False
+			for point in line:
+				if opaque: break
+				visible_tiles.add(point)
+				opaque = self.opacity_grid.get(point, True)
+		return visible_tiles
+
 	def is_in_grid(self, x, y):
-		return 0 <= x < self.width and 0 <= y < self.height
+		return 0 <= x <= self.width and 0 <= y <= self.height
  
 	def get_neighbors(self, x, y):
 		neighbors = []
@@ -142,6 +163,16 @@ class TileContainer:
 			result[x] = func(self.contents, x)
 		return result
 
+	def map_visible(self, func, position, seen):
+		visible = self.visible_from(position)
+		result = {}
+		for x in self.contents:
+			if x in visible:
+				result[x] = func(self.contents, x)
+			elif x in seen:
+				result[x] = func(self.contents, x, 0.5)
+		return result
+
 	def get_tile(self, x, y):
 		if (x, y) in self.contents:
 			return self.contents[(x, y)]
@@ -150,3 +181,4 @@ class TileContainer:
 
 	def set_tile(self, x, y, tile):
 		self.contents[(x, y)] = tile.copy()
+		self.construct_opacity_grid() # Might want to make the tiles themselves signal up to their container upon opacity change
