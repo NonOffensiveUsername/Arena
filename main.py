@@ -1,4 +1,4 @@
-from entity import Entity, EntityContainer
+from entity import Entity, Actor, EntityContainer
 import entity
 from tile import Tile, TileContainer
 from structs import *
@@ -15,16 +15,21 @@ Entity.DEFAULT_MAT = mat_dict["flesh"]
 tiles = loader.load_map(mat_dict, "map")
 
 # Test entities
-player = Entity.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
+player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
 player.seen = set()
+player.currently_seen = set()
 feloid = entity.RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
 kobold = entity.Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
 kobold.target = player
+genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
+axe = Entity.from_template("Battleaxe", (5, 7), {})
 
 entities = EntityContainer()
 entities.add_entity(player)
 entities.add_entity(kobold)
 entities.add_entity(feloid)
+entities.add_entity(genie)
+entities.add_entity(axe)
 
 # Creating the UI
 UI = Interface()
@@ -48,13 +53,12 @@ move_binds = {
 }
 
 def update_UI():
-	intermediate_grid = tiles.map_visible(tilemappings.visual_map_func, player.position, player.seen)
+	intermediate_grid = tiles.map_visible(tilemappings.visual_map_func, player.position, player.currently_seen, player.seen)
 	for e in entities.pop_events():
 		shoutbox.add_shout(e.primary)
 	UI.base = intermediate_grid
-	UI.entity_layer = entities.build_grid()
+	UI.entity_layer = entities.build_grid(player.currently_seen)
 	UI.draw()
-	player.seen = player.seen.union(tiles.visible_from(player.position))
 
 TICK_RATE = 1/60
 def poll():
@@ -95,10 +99,10 @@ def get_single_menu_selection(title, options):
 
 def pick_adjacent_entity():
 	neighbors = entities.get_neighbors(player)
-	names = [i.name or i in neighbors]
+	names = [i.name for i in neighbors]
 	target = get_single_menu_selection("Target:", names)
 	if target is None: return None
-	return entities.contents[target]
+	return neighbors[target]
 
 def examine():
 	pointer = widget.Pointer(*player.position)
@@ -120,11 +124,12 @@ def examine():
 update_UI()
 
 while UI.is_alive():
+	player.currently_seen = tiles.visible_from(player.position)
+	player.seen = player.seen.union(player.currently_seen)
 	key = poll()
 
 	if key == 'grave': # debug key, effect subject to change
-		UI.window.print_glyph(ord(' '), 10, 24, bg = (255, 0, 0))
-		UI.window.update()
+		print(feloid.speed)
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break
@@ -135,6 +140,14 @@ while UI.is_alive():
 		if interaction_type is None: continue
 		interaction_target = pick_adjacent_entity()
 		if interaction_target is None: continue
+	elif key == 'g':
+		pick_target = pick_adjacent_entity()
+		if not pick_target: continue
+		if player.get(pick_target):
+			player.delay = 10
+			shoutbox.add_shout(f"Picked up {pick_target.name}")
+			continue
+		shoutbox.add_shout(f"Unable to pick up {pick_target.name}")
 	elif key == 'x':
 		examine()
 	elif key in move_binds:

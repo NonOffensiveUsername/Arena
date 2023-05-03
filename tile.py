@@ -163,11 +163,10 @@ class TileContainer:
 			result[x] = func(self.contents, x)
 		return result
 
-	def map_visible(self, func, position, seen):
-		visible = self.visible_from(position)
+	def map_visible(self, func, position, sees, seen):
 		result = {}
 		for x in self.contents:
-			if x in visible:
+			if x in sees:
 				result[x] = func(self.contents, x)
 			elif x in seen:
 				result[x] = func(self.contents, x, 0.5)

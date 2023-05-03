@@ -1,6 +1,6 @@
 import math
 import random
-from copy import deepcopy
+from copy import copy
 
 def bresenham_line(x0, y0, x1, y1):
 	dx = abs(x1 - x0)
@@ -55,15 +55,15 @@ def is_diag(vec):
 def color_mul(color, m):
 	return (int(color[0] * m), int(color[1] * m), int(color[2] * m))
 
-# Takes two dictionaries as arguments
-# Copies a and overwrites b onto the copy
-# The new dict is returned
-def dict_overwrite(a, b):
-	new_dict = deepcopy(a)
-	for k in new_dict:
-		if k in b:
-			if type(b[k]) != dict:
-				new_dict[k] = b[k]
-			else:
-				new_dict[k] = dict_overwrite(new_dict[k], b[k])
+# Takes two dictionaries and returns a recursively updated copy
+def deep_update(a, b):
+	new_dict = copy(a)
+	for x, y in b.items():
+		if type(y) == dict:
+			new_dict[x] = deep_update(a.get(x, {}), y)
+			continue
+		new_dict[x] = y
 	return new_dict
+
+def cut(string, start, stop):
+	return string[0:start] + string[stop:]

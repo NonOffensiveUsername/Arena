@@ -66,7 +66,7 @@ class BodyPart:
 			if trait in part.traits: return True
 		return False
 
-default_entity_attributes = {
+default_actor_attributes = {
 	"attribute": {
 		"size": 0,
 		"ST": 10,
@@ -83,17 +83,13 @@ default_entity_attributes = {
 	}
 }
 
-default_object_attributes = {
+default_entity_attributes = {
 	"attribute": {
 		"size": 0,
 		"ST": 10,
-		"HT": 12,
-		"DX": 0,
-		"IQ": 0,
+		"HT": 10,
 	},
-	"trait": {
-		"object": 1,
-	},
+	"trait": {},
 	"bodyplan": "simple",
 	"display": {
 		"character": '*',
@@ -103,30 +99,26 @@ default_object_attributes = {
 }
 
 class Entity:
-
 	DEFAULT_MAT = None
+	DEFAULT_TEMPLATE = default_entity_attributes
 
-	# This initializer creates entities with missing attributes
-	# They have no display information, body, or stats, and are
-	# thus unsafe to use.
 	def __init__(self, name, position, is_player = False):
 		self.name = name
 		self.contents = []
 		self.position = position
+		self.container = None
 		self.delay = 0
 		self.is_player = is_player
 		self.pronoun = "it"
 		self.observer = None
 		self.material = Entity.DEFAULT_MAT
 		self.traits = {}
-		self.soul = None
 
 	@classmethod
-	def from_template(cls, name, position, template = {}, is_player = False, is_object = False):
+	def from_template(cls, name, position, template = {}, is_player = False):
 		e = cls(name, position, is_player)
 
-		full_template = util.dict_overwrite(default_object_attributes, template) \
-			if is_object else util.dict_overwrite(default_entity_attributes, template)
+		full_template = util.deep_update(cls.DEFAULT_TEMPLATE, template)
 
 		e.display_tile = Glyph(**full_template["display"])
 
@@ -135,7 +127,6 @@ class Entity:
 
 		e.construct_body(full_template["bodyplan"])
 		e.traits = full_template["trait"]
-		e.is_alive = True
 		e.calculate_secondaries()
 		e.hp = e.hp_max
 
@@ -151,10 +142,7 @@ class Entity:
 		e.root_part.normalize()
 		e.ST = math.ceil(math.pow(1.5, e.size) * parent.ST)
 		e.HT = 10
-		e.DX = 0
-		e.IQ = 0
 		e.display_tile = Glyph('%', (0, 0, 0), (200, 0, 0)) # TODO: Change glyph based on part traits
-		e.is_alive = False
 
 		return e
 
@@ -166,12 +154,12 @@ class Entity:
 			eyes = BodyPart("Eyes", -9, 10, traits = [PartFlag.SIGHT])
 			l_arm = BodyPart("Left arm", -2, 2, traits = [PartFlag.LEVER])
 			r_arm = BodyPart("Right arm", -2, 2, traits = [PartFlag.LEVER])
-			l_hand = BodyPart("Left hand", -4, 4, traits = [PartFlag.SECONDARY_GRASPER, PartFlag.STRIKER])
-			r_hand = BodyPart("Right hand", -4, 4, traits = [PartFlag.GRASPER, PartFlag.STRIKER])
+			l_hand = BodyPart("Left hand", -4, 3, traits = [PartFlag.SECONDARY_GRASPER, PartFlag.STRIKER])
+			r_hand = BodyPart("Right hand", -4, 3, traits = [PartFlag.GRASPER, PartFlag.STRIKER])
 			l_leg = BodyPart("Left leg", -2, 2, traits = [PartFlag.LEVER, PartFlag.WALKER])
 			r_leg = BodyPart("Right leg", -2, 2, traits = [PartFlag.LEVER, PartFlag.WALKER])
-			l_foot = BodyPart("Left Foot", -4, 4, traits = [PartFlag.BALANCER, PartFlag.STRIKER])
-			r_foot = BodyPart("Right Foot", -4, 4, traits = [PartFlag.BALANCER, PartFlag.STRIKER])
+			l_foot = BodyPart("Left Foot", -4, 3, traits = [PartFlag.BALANCER, PartFlag.STRIKER])
+			r_foot = BodyPart("Right Foot", -4, 3, traits = [PartFlag.BALANCER, PartFlag.STRIKER])
 			
 			root.add_children(neck, l_arm, r_arm, l_leg, r_leg)
 			neck.add_children(head)
@@ -183,16 +171,15 @@ class Entity:
 	
 			self.root_part =  root
 		else:
-			self.root_part = BodyPart("Mass", 100, traits = [PartFlag.SIMPLE])
+			self.root_part = BodyPart("Mass", 0, traits = [PartFlag.SIMPLE])
+
+	def calculate_secondaries(self): # This is poopy get rid of it
+		self.hp_max = int(self.ST * self.material.density)
 
 	def sever(self, part):
 		new_entity = Entity.from_part(part, self)
 		self.observer.add_entity(new_entity)
 		part.kill()
-
-	def calculate_secondaries(self):
-		self.hp_max = self.ST * self.material.density
-		self.speed = (self.DX + self.HT) / 4
 
 	# Consider giving this function a return value as a way to pass signals to the game state
 	# e.g. if the object is a light source and it changes how much light it gives off its
@@ -202,10 +189,15 @@ class Entity:
 		#print(f"The {self.name} continues being a {self.name}.")
 		self.delay = random.randint(1000, 10000)
 
+	def raise_event(self, event):
+		if self.observer:
+			self.observer.events.append(event)
+
 	def apply_delta(self, delta):
 		self.position = (self.position[0] + delta[0], self.position[1] + delta[1])
 
 	def move(self, game_state, direction):
+		if self.position is None: return False
 		new_position = (direction[0] + self.position[0], direction[1] + self.position[1])
 		target_tile = game_state.get_tile(new_position[0], new_position[1])
 		cost = target_tile.traversal_cost() * (1 + util.is_diag(direction) * 0.4)
@@ -216,71 +208,115 @@ class Entity:
 			self.delay = 10
 		return traversible
 
-	def send_attack(self, target):
-		acc = dice.roll()
-		damage_dice = max((self.ST - 3) // 8, 1)
-		damage_mod = (self.ST - 3) % 8 // 2 - 1 if self.ST >= 11 else (self.ST + 1) // 2 - 7
-		power = dice.roll(damage_dice, mod = damage_mod)
-		attack = Attack(power, DamageType.CUT if self.is_player else DamageType.BASH, acc)
-		target.receive_attack(self, attack)
-		self.delay = 100 / self.speed
-
 	def receive_attack(self, attacker, attack):
-		if dice.roll() <= 9:
-			attack_descriptor = f"{attacker.name} attacks the {self.name}, but {self.pronoun} dodges!"
-			self.raise_event(Event(visual = attack_descriptor))
-			return
 		damage = max(0, attack.power - self.material.hardness)
 		uncapped_damage = damage
 		target_part = attack.target
 		if target_part is None:
 			target_part = self.root_part.get_weighted_random_part()
 		# Apply multiplier for damage type and target part here
+		major_injury_threshold = self.hp_max // target_part.hp_divisor + (self.hp_max % target_part.hp_divisor > 0) if target_part.hp_divisor else None
 		if target_part.hp_divisor:
 			maximum = self.hp_max // target_part.hp_divisor - target_part.damage
 			damage = min(damage, maximum)
 		target_part.damage += damage
 		self.hp -= damage
-		attack_descriptor = f"{attacker.name} attacks {self.name} in the {target_part.name} for {damage} damage!"
+		damage_num_color = 'r' if damage > 0 else 'g'
+		attack_descriptor = f"{attacker.name} attacks {self.name} in the {target_part.name} for [{damage_num_color}]{damage}[w] damage!"
 		self.raise_event(Event(visual = attack_descriptor))
-		if target_part.hp_divisor and target_part.damage >= (x := self.hp_max // target_part.hp_divisor) and PartFlag.CRIPPLED not in target_part.traits:
-			if uncapped_damage > x and attack.damage_type == DamageType.CUT:
-				self.sever(target_part)
-				sever_descriptor = f"The {self.name}'s {target_part.name} is severed by the attack!"
-				self.raise_event(Event(visual = sever_descriptor))
+		if target_part.hp_divisor and target_part.damage >= major_injury_threshold and PartFlag.CRIPPLED not in target_part.traits:
+			if uncapped_damage > (major_injury_threshold * 2):
+				if attack.damage_type == DamageType.CUT:
+					self.sever(target_part)
+					sever_descriptor = f"The {self.name}'s {target_part.name} is [r]severed[w] by the attack!"
+					self.raise_event(Event(visual = sever_descriptor))
+					return
+				target_part.kill()
+				destroy_descriptor = f"The {self.name}'s {target_part.name} is [r]pulped[w] by the attack!"
+				self.raise_event(Event(visual = destroy_descriptor))
 				return
 			target_part.traits.append(PartFlag.CRIPPLED)
-			cripple_descriptor = f"The {self.name}'s {target_part.name} is crippled by the blow!"
+			cripple_descriptor = f"The {self.name}'s {target_part.name} is [r]crippled[w] by the blow!"
 			self.raise_event(Event(visual = cripple_descriptor))
 
-		if self.hp <= 0 and self.soul:
-			self.soul = None
-			self.display_tile.fg = (150, 150, 150)
-			self.display_tile.bg = (200, 0, 0)
+	def can_be_picked_up(self, picker):
+		return True
 
-	def raise_event(self, event):
-		if self.observer:
-			self.observer.events.append(event)
+class Actor(Entity):
+	DEFAULT_TEMPLATE = default_actor_attributes
 
-class RandomWalker(Entity):
+	def __init__(self, name, position, is_player = False):
+		super().__init__(name, position, is_player)
+
+	def calculate_secondaries(self):
+		super().calculate_secondaries()
+		self.speed = (self.DX + self.HT) / 4
+		if "speed_boost" in self.traits:
+			self.speed += self.traits["speed_boost"]
+
+	def send_attack(self, target):
+		acc = dice.roll()
+		swing = False
+		effective_ST = self.ST + max(2, self.ST - 7) if swing else self.ST
+		damage_dice = max((effective_ST - 3) // 8, 1)
+		damage_mod = (effective_ST - 3) % 8 // 2 - 1 if effective_ST >= 11 else (effective_ST + 1) // 2 - 7
+		power = dice.roll(damage_dice, mod = damage_mod)
+		attack = Attack(power, DamageType.CUT if self.is_player else DamageType.BASH, acc)
+		target.receive_attack(self, attack)
+		self.delay = 10
+
+	def receive_attack(self, attacker, attack):
+		if dice.roll() <= 9:
+			attack_descriptor = f"{attacker.name} attacks the {self.name}, but {self.pronoun} dodges!"
+			self.raise_event(Event(visual = attack_descriptor))
+			return
+		super().receive_attack(attacker, attack)
+
+		if self.hp > 0:
+			return
+
+		self.display_tile.fg = (150, 150, 150)
+		self.display_tile.bg = (200, 0, 0)
+		self.raise_event(Event(visual = f"[m]The {self.name} is struck down."))
+
+	def dodge(self):
+		dodge_target = int(self.speed) + 3
+		r = dice.roll()
+		return r <= dodge_target
+
+	def get(self, target):
+		if target is self:
+			return False # Entities probably shouldn't be their own container
+		if not target.can_be_picked_up(self):
+			return False
+		target.position = None
+		target.container = self
+		self.contents.append(target)
+		return True
+
+	def can_be_picked_up(self, picker):
+		if self.dodge():
+			self.raise_event(Event(visual = f"The {self.name} dodges the grab!"))
+			return False
+		return picker.ST > self.ST
+
+class RandomWalker(Actor):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.soul = "random"
 
 	def update(self, game_state):
-		if not self.soul:
+		if self.hp <= 0 or self.position is None:
 			self.delay = 1000
 			return
 		direction = (random.randrange(-1, 2), random.randrange(-1, 2))
 		self.move(game_state, direction)
 
-class Chaser(Entity):
+class Chaser(Actor):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.soul = "chaser"
 
 	def update(self, game_state):
-		if not self.soul:
+		if self.hp <= 0 or self.position is None:
 			self.delay = 1000
 			return
 		dist_from_target = util.dist_between(self.position, self.target.position)
@@ -299,6 +335,7 @@ class EntityContainer:
 	def add_entity(self, entity):
 		self.contents.append(entity)
 		entity.observer = self
+		self.sort_entities()
 
 	def sort_entities(self):
 		self.contents = sorted(self.contents, key = lambda x: x.delay)
@@ -338,21 +375,9 @@ class EntityContainer:
 		self.events = []
 		return e
 
-	def build_grid(self):
+	def build_grid(self, visible):
 		grid = {}
 		for e in sorted(self.contents, key = lambda x: x.size):
-			grid[e.position] = e.display_tile
+			if e.position in visible:
+				grid[e.position] = e.display_tile
 		return grid
-
-# Random target distibution test
-if __name__ == '__main__':
-	Entity.DEFAULT_MAT = Material("Test", State.SOLID, 1.0, 0, 1, None, None, None, None)
-	test_entity = Entity.from_template("test", (0, 0))
-	dic = {}
-	for i in range(1000):
-		target = test_entity.root_part.get_weighted_random_part().name
-		if target in dic:
-			dic[target] += 1
-		else:
-			dic[target] = 1
-	print(dic)

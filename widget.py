@@ -1,4 +1,4 @@
-from structs import Glyph
+from structs import Glyph, GlyphString
 
 class Widget:
 	def __init__(self, x, y, w, h):
@@ -31,13 +31,27 @@ class Widget:
 
 	def print(self, string, x, y, wrap = True):
 		offset = 0
-		for char in string:
+		glyphs = GlyphString(string)
+		for glyph in glyphs:
 			if wrap:
 				position = (self.x + x + (offset % self.w), self.y + y + (offset // self.w))
-				self.buffer[position] = Glyph(char)
+				self.buffer[position] = glyph
 			else:
 				position = (self.x + x + offset, self.y + y)
-				self.buffer[position] = Glyph(char)
+				self.buffer[position] = glyph
+				if offset + 1 > self.w: break
+			offset += 1
+			if offset // self.w > self.h: break
+
+	def draw_glyph_sequence(self, glyphs, x, y, wrap = True):
+		offset = 0
+		for glyph in glyphs:
+			if wrap:
+				position = (self.x + x + (offset % self.w), self.y + y + (offset // self.w))
+				self.buffer[position] = glyph
+			else:
+				position = (self.x + x + offset, self.y + y)
+				self.buffer[position] = glyph
 				if offset + 1 > self.w: break
 			offset += 1
 			if offset // self.w > self.h: break
