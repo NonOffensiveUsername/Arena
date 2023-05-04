@@ -214,8 +214,10 @@ class Entity:
 		target_part = attack.target
 		if target_part is None:
 			target_part = self.root_part.get_weighted_random_part()
-		# Apply multiplier for damage type and target part here
-		major_injury_threshold = self.hp_max // target_part.hp_divisor + (self.hp_max % target_part.hp_divisor > 0) if target_part.hp_divisor else None
+		# TODO: Apply multiplier for damage type and target part here
+		major_injury_threshold = \
+			self.hp_max // target_part.hp_divisor + (self.hp_max % target_part.hp_divisor > 0) \
+			if target_part.hp_divisor else None
 		if target_part.hp_divisor:
 			maximum = self.hp_max // target_part.hp_divisor - target_part.damage
 			damage = min(damage, maximum)

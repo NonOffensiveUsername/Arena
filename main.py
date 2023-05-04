@@ -73,7 +73,7 @@ def poll():
 	return False
 
 def get_dir():
-	while key := poll():
+	while key := poll().symbol:
 		if key in move_binds:
 			return move_binds[key]
 		elif key == 's' or key == 'escape': break
@@ -83,7 +83,7 @@ def get_single_menu_selection(title, options):
 	menu = widget.SingleSelectMenu(3, 2, 20, 15, title = title, options = options)
 	UI.register(menu)
 	result = None
-	while key := poll():
+	while key := poll().symbol:
 		if key == 'j':
 			menu.pointer += 1
 		elif key == 'k':
@@ -109,7 +109,7 @@ def examine():
 	entity_list = widget.ListBox(75, 0, 24, 24, "Located Here:")
 	UI.register(pointer)
 	UI.register(entity_list)
-	while key := poll():
+	while key := poll().symbol:
 		if key in move_binds:
 			pointer.nudge(move_binds[key])
 			found_entities = entities.find_at((pointer.x, pointer.y))
@@ -126,9 +126,9 @@ update_UI()
 while UI.is_alive():
 	player.currently_seen = tiles.visible_from(player.position)
 	player.seen = player.seen.union(player.currently_seen)
-	key = poll()
+	key = poll().symbol
 
-	if key == 'grave': # debug key, effect subject to change
+	if key == '`': # debug key, effect subject to change
 		print(feloid.speed)
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])

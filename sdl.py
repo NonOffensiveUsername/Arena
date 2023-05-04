@@ -1,14 +1,77 @@
 from ctypes import *
+from collections import namedtuple
 import os
+import struct
 
 ROW_HEIGHT = 16
 COLUMN_WIDTH = 8
 #SCALE_FACTOR = 2
+
 COLOR_KEY = 0x00FF00FF
+
+# See SDL_WindowEvent in SDL_events.h for struct details
+# This will never use more than 30 bytes but the padding is required because
+# the event struct is a union with a max length of 56 bytes.
+EVENT_STRUCT_FORMAT = "IIIBBxxiiHIxxxxxxxxxxxxxxxxxxxxxxxx"
+
+class KeyEvent:
+	# Magic numbers from SDL
+	KEYMOD_SHIFT = 0x0001 | 0x0002
+	KEYMOD_CTRL  = 0x0040 | 0x0080
+	KEYMOD_ALT   = 0x0100 | 0x0200
+
+	CODES_TO_SYMS = {
+		27: "escape",
+		13: "enter",
+		79: "right",
+		80: "left",
+		81: "down",
+		86: "up",
+		89: "down_left",
+		90: "down",
+		91: "down_right",
+		92: "left",
+		94: "right",
+		95: "up_left",
+		96: "up",
+		97: "up_right",
+	}
+
+	def __init__(self, scancode, keycode, keymod):
+		self.scancode = scancode
+		self.keycode = keycode
+		self.keymod = keymod
+
+	def __repr__(self):
+		out = str(self.scancode) + " " + str(self.keycode)
+		if self.shift: out += " +SHIFT"
+		if self.ctrl: out += " +CTRL"
+		if self.alt: out += " +ALT"
+		return out
+
+	@property
+	def shift(self):
+		return self.keymod & KeyEvent.KEYMOD_SHIFT
+
+	@property
+	def ctrl(self):
+		return self.keymod & KeyEvent.KEYMOD_CTRL
+
+	@property
+	def alt(self):
+		return self.keymod & KeyEvent.KEYMOD_ALT
+
+	@property
+	def symbol(self):
+		if 32 < self.keycode < 0x110000:
+			return chr(self.keycode)
+		if self.keycode in KeyEvent.CODES_TO_SYMS:
+			return KeyEvent.CODES_TO_SYMS[self.keycode]
+		return self.scancode
 
 # Tell windows we're DPI aware to prevent stretching and blurring
 try:
-	windll.shcore.SetProcessDpiAwareness (True)
+	windll.shcore.SetProcessDpiAwareness(True)
 except:
 	pass
 
@@ -52,7 +115,6 @@ class Window():
 		self.window = dll.SDL_CreateWindow(bytes(title, 'utf-8'), x, y, w, h, flags)
 		self.surface = dll.SDL_GetWindowSurface(self.window)
 		# SDL code suggests that 56 bytes is the maximum size of a returned event union
-		# TODO: create a struct for events
 		self.event = create_string_buffer(56)
 		self.quit = False
 		self.width = w // COLUMN_WIDTH
@@ -81,16 +143,8 @@ class Window():
 		while dll.SDL_PollEvent(byref(self.event)):
 			field = self.event.raw[0] + self.event.raw[1] * 0x100
 			if field == 0x300:
-				keycode = self.event.raw[20]
-				if 97 <= keycode <= 122:
-					event_queue.append(chr(keycode))
-				elif keycode == 13:
-					event_queue.append('enter')
-				elif keycode == 96:
-					event_queue.append('grave')
-				elif keycode == 27:
-					event_queue.append('escape')
-				#print(self.event.raw[20])
+				e = KeyEvent(*struct.unpack(EVENT_STRUCT_FORMAT, self.event)[5:-1])
+				event_queue.append(e)
 			elif field == 0x100:
 				self.quit = True
 		return event_queue
