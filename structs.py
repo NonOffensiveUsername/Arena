@@ -1,4 +1,5 @@
 from enum import Enum
+#from dataclasses import dataclass
 import re
 import util
 
@@ -49,7 +50,7 @@ class PartFlag(Enum):
 	STRIKER = "striker"
 	SIMPLE = "simple"
 
-class Event():
+class Event:
 	# Volume is a logarithmic unit. An event with volume 0 can be heard automatically at a distance of 1 yard.
 	# Each +1 volume doubles this distance, each -1 halves it.
 	def __init__(self, visual = None, sound = None, volume = 0.0, visual_priority = True):
@@ -66,6 +67,35 @@ class Event():
 	def sound_glyph(self):
 		char = "!" # TODO: change character based on volume
 		return Glyph(char, (255, 255, 0))
+
+#@dataclass(slots = True)
+#class UseCase:
+#	skill: str
+#
+#@dataclass(slots = True)
+#class AttackTemplate(UseCase):
+#	muscle: str = "no"
+#	dice: int = 0
+#	damage_mod: int = 0
+#	ST_requirement: int = 10
+#	ST_flags: str = ""
+#
+#@dataclass(slots = True)
+#class AttackTemplateMelee(AttackTemplate):
+#	reach: list[int]
+#	parry: int = 0
+#	parry_flags: str = ""
+#
+#@dataclass(slots = True)
+#class AttackTemplateRanged(AttackTemplate):
+#	accuracy: int
+#	bulk: int
+#	recoil: int
+#	rate_of_fire: int
+#	shots: int
+#	min_range: int
+#	half_range: int
+#	max_range: int
 
 class Attack:
 	def __init__(self, power, damage_type, accuracy, target = None, weapon = None, flags = ()):

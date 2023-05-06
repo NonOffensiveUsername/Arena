@@ -8,6 +8,7 @@ from copy import deepcopy
 class BodyPart:
 	def __init__(self, name, size = 0, hp_divisor = False, traits = []):
 		self._children = []
+		self.held = None
 		self.name = name
 		self.traits = traits
 		self.size = size
@@ -76,6 +77,18 @@ default_actor_attributes = {
 	},
 	"trait": {},
 	"bodyplan": "humanoid",
+	"use_cases": [],
+	"melee_attacks": [
+		{
+			"skill": "brawling",
+			"muscle": "thrust",
+			"damage_type": "bash",
+			"damage_mod": -2,
+			"ST_requirement": -1,
+			"reach": [0, 1],
+		}
+	],
+	"ranged_attacks": [],
 	"display": {
 		"character": 1,
 		"fg": [255, 255, 255],
@@ -91,6 +104,9 @@ default_entity_attributes = {
 	},
 	"trait": {},
 	"bodyplan": "simple",
+	"use_cases": [],
+	"melee_attacks": [],
+	"ranged_attacks": [],
 	"display": {
 		"character": '*',
 		"fg": [255, 255, 255],
@@ -113,6 +129,7 @@ class Entity:
 		self.observer = None
 		self.material = Entity.DEFAULT_MAT
 		self.traits = {}
+		self.melee_attacks = []
 
 	@classmethod
 	def from_template(cls, name, position, template = {}, is_player = False):
@@ -127,6 +144,7 @@ class Entity:
 
 		e.construct_body(full_template["bodyplan"])
 		e.traits = full_template["trait"]
+		e.melee_attacks = full_template["melee_attacks"]
 		e.calculate_secondaries()
 		e.hp = e.hp_max
 
@@ -257,12 +275,26 @@ class Actor(Entity):
 			self.speed += self.traits["speed_boost"]
 
 	def send_attack(self, target):
+		# This all sucks, attack should be selected outside this function
+		# Specifically, this function should ONLY handle building the attack object
+		# and triggering the targets receiver method.
+		primary_hand = None
+		if hands := self.root_part.get_parts_with_trait(PartFlag.GRASPER):
+			primary_hand = hands[0]
+		weapon = None
+		if primary_hand and primary_hand.held:
+			weapon = primary_hand.held
+		attack_template = self.melee_attacks[0]
+		if weapon:
+			attack_template = weapon.melee_attacks[0]
+		# /suckage
 		acc = dice.roll()
-		swing = False
+		swing = attack_template["muscle"] == "swing"
 		effective_ST = self.ST + max(2, self.ST - 7) if swing else self.ST
 		damage_dice = max((effective_ST - 3) // 8, 1)
 		damage_mod = (effective_ST - 3) % 8 // 2 - 1 if effective_ST >= 11 else (effective_ST + 1) // 2 - 7
 		power = dice.roll(damage_dice, mod = damage_mod)
+		damage_type = DamageType.CUT if attack_template["damage_type"] == "cut" else DamageType.BASH
 		attack = Attack(power, DamageType.CUT if self.is_player else DamageType.BASH, acc)
 		target.receive_attack(self, attack)
 		self.delay = 10
@@ -289,11 +321,23 @@ class Actor(Entity):
 	def get(self, target):
 		if target is self:
 			return False # Entities probably shouldn't be their own container
+		if not (hands := self.root_part.get_parts_with_trait(PartFlag.GRASPER)):
+			return False
+		no_hand_available = True
+		used_hand = None
+		for hand in hands:
+			if hand.held is None:
+				no_hand_available = False
+				used_hand = hand
+				break
+		if no_hand_available:
+			return False
 		if not target.can_be_picked_up(self):
 			return False
 		target.position = None
 		target.container = self
 		self.contents.append(target)
+		used_hand.held = target
 		return True
 
 	def can_be_picked_up(self, picker):
@@ -334,9 +378,10 @@ class EntityContainer:
 		self.contents = []
 		self.events = []
 
-	def add_entity(self, entity):
-		self.contents.append(entity)
-		entity.observer = self
+	def add_entity(self, *entities):
+		for e in entities:
+			self.contents.append(e)
+			e.observer = self
 		self.sort_entities()
 
 	def sort_entities(self):
@@ -366,11 +411,13 @@ class EntityContainer:
 			if e.position in positions: found.append(e)
 		return found
 
-	def get_neighbors(self, e):
+	def get_neighbors(self, e, exclude_self = True):
 		targets = []
 		for direction in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)):
 			targets.append(util.tup_add(e.position, direction))
-		return self.find_in(targets)
+		neighbors = self.find_in(targets)
+		if exclude_self and e in neighbors: neighbors.remove(e)
+		return neighbors
 
 	def pop_events(self):
 		e = self.events.copy()

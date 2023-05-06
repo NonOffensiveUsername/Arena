@@ -22,14 +22,10 @@ feloid = entity.RandomWalker.from_template("Feloid Wanderer", (17, 8), template_
 kobold = entity.Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
 kobold.target = player
 genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
-axe = Entity.from_template("Battleaxe", (5, 7), {})
+axe = Entity.from_template("Axe", (5, 7), template_dict["axe"])
 
 entities = EntityContainer()
-entities.add_entity(player)
-entities.add_entity(kobold)
-entities.add_entity(feloid)
-entities.add_entity(genie)
-entities.add_entity(axe)
+entities.add_entity(player, kobold, feloid, genie, axe)
 
 # Creating the UI
 UI = Interface()
@@ -97,10 +93,10 @@ def get_single_menu_selection(title, options):
 	UI.pop_widget()
 	return result
 
-def pick_adjacent_entity():
+def pick_adjacent_entity(prompt):
 	neighbors = entities.get_neighbors(player)
 	names = [i.name for i in neighbors]
-	target = get_single_menu_selection("Target:", names)
+	target = get_single_menu_selection(prompt, names)
 	if target is None: return None
 	return neighbors[target]
 
@@ -129,7 +125,7 @@ while UI.is_alive():
 	key = poll().symbol
 
 	if key == '`': # debug key, effect subject to change
-		print(feloid.speed)
+		print(player.root_part.get_parts_with_trait(PartFlag.GRASPER)[0].held)
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break
@@ -138,14 +134,14 @@ while UI.is_alive():
 	elif key == 'e':
 		interaction_type = get_single_menu_selection("Interact:", ['Attack', 'Pet'])
 		if interaction_type is None: continue
-		interaction_target = pick_adjacent_entity()
+		interaction_target = pick_adjacent_entity("Target:")
 		if interaction_target is None: continue
 	elif key == 'g':
-		pick_target = pick_adjacent_entity()
+		pick_target = pick_adjacent_entity("Pick up what?")
 		if not pick_target: continue
 		if player.get(pick_target):
 			player.delay = 10
-			shoutbox.add_shout(f"Picked up {pick_target.name}")
+			shoutbox.add_shout(f"You grab the [y]{pick_target.name}")
 			continue
 		shoutbox.add_shout(f"Unable to pick up {pick_target.name}")
 	elif key == 'x':
