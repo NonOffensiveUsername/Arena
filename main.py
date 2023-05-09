@@ -1,5 +1,7 @@
-from entity import Entity, Actor, EntityContainer
+from entity import Entity, EntityContainer
 import entity
+from actor import Actor
+import actor
 from tile import Tile, TileContainer
 from structs import *
 from gui import Interface
@@ -18,10 +20,10 @@ tiles = loader.load_map(mat_dict, "map")
 player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
 player.seen = set()
 player.currently_seen = set()
-feloid = entity.RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
-kobold = entity.Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
+feloid = actor.RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
+kobold = actor.Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
 kobold.target = player
-genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
+genie = actor.Actor.from_template("Genie", (45, 10), template_dict["spirit"])
 axe = Entity.from_template("Axe", (5, 7), template_dict["axe"])
 
 entities = EntityContainer()
@@ -165,23 +167,22 @@ while UI.is_alive():
 	elif key == 'a':
 		shoutbox.add_shout("Attack where? (dir key or s to cancel)")
 		direction = get_dir()
-		if direction:
-			target = (player.position[0] + direction[0], player.position[1] + direction[1])
-			e = entities.find_at(target)
-			if e:
-				target = e[0]
-				if len(e) > 1:
-					target = pick_named_object_from_list("Attack what?", e)
-				target_part = None
-				if event.shift:
-					target_part = pick_named_object_from_list("Which part?" ,target.root_part.get_part_list())
-				player.send_attack(target, target_part)
-			else:
-				shoutbox.add_shout("Whoosh!")
-				player.delay += 10
-		else:
+		if not direction:
 			shoutbox.add_shout("Cancelled")
 			continue
+		target = (player.position[0] + direction[0], player.position[1] + direction[1])
+		e = entities.find_at(target)
+		if not e:
+			shoutbox.add_shout("Whoosh!")
+			player.delay += 10
+			continue
+		target = e[0]
+		if len(e) > 1:
+			target = pick_named_object_from_list("Attack what?", e)
+		target_part = None
+		if event.shift:
+			target_part = pick_named_object_from_list("Which part?", target.root_part.get_part_list())
+		player.send_attack(target, target_part)
 
 	entities.process(tiles)
 	update_UI()

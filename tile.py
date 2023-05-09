@@ -11,9 +11,9 @@ class Tile:
 	# Movement point cost of moving through the tile
 	def traversal_cost(self, flyer = False):
 		if self.wall_material.state == State.GAS:
-			return 100
+			return 10
 		elif self.wall_material.state == State.LIQUID:
-			return 300
+			return 30
 		else:
 			return -1
 
@@ -78,19 +78,17 @@ class TileContainer:
 				visible_tiles.add(point)
 				opaque = self.opacity_grid.get(point, True)
 		return visible_tiles
-
-	def is_in_grid(self, x, y):
-		return 0 <= x <= self.width and 0 <= y <= self.height
  
 	def get_neighbors(self, x, y):
 		neighbors = []
 		for direction in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)):
 			neighbor_x = x + direction[0]
 			neighbor_y = y + direction[1]
-			if self.is_in_grid(neighbor_x, neighbor_y):
-				cost = self.get_tile(neighbor_x, neighbor_y).traversal_cost()
-				if cost >= 0:
-					neighbors.append((neighbor_x, neighbor_y))
+			if (neighbor_x, neighbor_y) not in self.contents:
+				continue
+			cost = self.get_tile(neighbor_x, neighbor_y).traversal_cost()
+			if cost >= 0:
+				neighbors.append((neighbor_x, neighbor_y))
 		return neighbors
 
 	# Most search code modified from red blob games
