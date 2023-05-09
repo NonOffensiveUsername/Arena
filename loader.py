@@ -49,4 +49,13 @@ def load_templates():
 	templates_file.close()
 	templates = json.loads(templates_raw)
 
+	# Filtering strings into enums
+	for template in templates.values():
+		if "bodyplan" in template:
+			template["bodyplan"] = BodyType(template["bodyplan"])
+		if "melee_attacks" in template:
+			for attack in template["melee_attacks"]:
+				attack["skill"] = Skill(attack["skill"])
+				attack["damage_type"] = DamageType(attack["damage_type"])
+
 	return templates

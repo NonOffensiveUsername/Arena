@@ -35,6 +35,7 @@ class DamageType(Enum):
 
 class BodyType(Enum):
 	HUMANOID = "humanoid"
+	SIMPLE = "simple"
 
 class PartFlag(Enum):
 	CRIPPLED = "crippled"
@@ -49,6 +50,11 @@ class PartFlag(Enum):
 	CUTTABLE = "cuttable"
 	STRIKER = "striker"
 	SIMPLE = "simple"
+
+class Skill(Enum):
+	AXE_MACE = "axe_mace"
+	AXE_MACE_2H = "axe_mace_2h"
+	BRAWLING = "brawling"
 
 class Event:
 	# Volume is a logarithmic unit. An event with volume 0 can be heard automatically at a distance of 1 yard.

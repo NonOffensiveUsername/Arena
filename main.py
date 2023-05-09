@@ -100,9 +100,17 @@ def pick_adjacent_entity(prompt):
 	if target is None: return None
 	return neighbors[target]
 
+# Works for any list of objects with .name attributes
+# Mainly entities and body parts
+def pick_named_object_from_list(prompt, options):
+	names = [i.name for i in options]
+	target = get_single_menu_selection(prompt, names)
+	if target is None: return None
+	return options[target]
+
 def examine():
 	pointer = widget.Pointer(*player.position)
-	entity_list = widget.ListBox(75, 0, 24, 24, "Located Here:")
+	entity_list = widget.ListBox(60, 0, 39, 24, "Located Here:")
 	UI.register(pointer)
 	UI.register(entity_list)
 	while key := poll().symbol:
@@ -122,10 +130,11 @@ update_UI()
 while UI.is_alive():
 	player.currently_seen = tiles.visible_from(player.position)
 	player.seen = player.seen.union(player.currently_seen)
-	key = poll().symbol
+	event = poll()
+	key = event.symbol
 
 	if key == '`': # debug key, effect subject to change
-		print(player.root_part.get_parts_with_trait(PartFlag.GRASPER)[0].held)
+		print(player.root_part.get_parts_with_trait(PartFlag.GRASPER)[0].held.melee_attacks)
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break
@@ -160,7 +169,13 @@ while UI.is_alive():
 			target = (player.position[0] + direction[0], player.position[1] + direction[1])
 			e = entities.find_at(target)
 			if e:
-				player.send_attack(e[0])
+				target = e[0]
+				if len(e) > 1:
+					target = pick_named_object_from_list("Attack what?", e)
+				target_part = None
+				if event.shift:
+					target_part = pick_named_object_from_list("Which part?" ,target.root_part.get_part_list())
+				player.send_attack(target, target_part)
 			else:
 				shoutbox.add_shout("Whoosh!")
 				player.delay += 10

@@ -76,11 +76,12 @@ default_actor_attributes = {
 		"IQ": 10,
 	},
 	"trait": {},
-	"bodyplan": "humanoid",
+	"bodyplan": BodyType.HUMANOID,
 	"use_cases": [],
 	"melee_attacks": [
 		{
 			"skill": "brawling",
+			"quality": 0,
 			"muscle": "thrust",
 			"damage_type": "bash",
 			"damage_mod": -2,
@@ -103,7 +104,7 @@ default_entity_attributes = {
 		"HT": 10,
 	},
 	"trait": {},
-	"bodyplan": "simple",
+	"bodyplan": BodyType.SIMPLE,
 	"use_cases": [],
 	"melee_attacks": [],
 	"ranged_attacks": [],
@@ -162,10 +163,30 @@ class Entity:
 		e.HT = 10
 		e.display_tile = Glyph('%', (0, 0, 0), (200, 0, 0)) # TODO: Change glyph based on part traits
 
+		root_is_lever = PartFlag.LEVER in e.root_part.traits
+		improvised_attack_skill = Skill.BRAWLING
+		if root_is_lever:
+			if e.size > -2:
+				improvised_attack_skill = Skill.AXE_MACE_2H
+			else:
+				improvised_attack_skill = Skill.AXE_MACE
+		improvised_weapon_reach = list(range(root_is_lever, max(1, e.size + 3)))
+		improvised_attack = {
+			"skill": improvised_attack_skill,
+			"quality": -2,
+			"muscle": "thrust",
+			"damage_type": DamageType.BASH,
+			"damage_mod": -1,
+			"ST_requirement": max(e.size * 2 + 14, 1),
+			"reach": improvised_weapon_reach,
+		}
+
+		e.melee_attacks = [improvised_attack]
+
 		return e
 
 	def construct_body(self, bodyplan):
-		if bodyplan == "humanoid":
+		if bodyplan == BodyType.HUMANOID:
 			root = BodyPart("Torso", 0, traits = [PartFlag.VITALS])
 			neck = BodyPart("Neck", -5, traits = [PartFlag.CUTTABLE])
 			head = BodyPart("Head", -7, traits = [PartFlag.MIND])
@@ -274,7 +295,7 @@ class Actor(Entity):
 		if "speed_boost" in self.traits:
 			self.speed += self.traits["speed_boost"]
 
-	def send_attack(self, target):
+	def send_attack(self, target, target_part = None):
 		# This all sucks, attack should be selected outside this function
 		# Specifically, this function should ONLY handle building the attack object
 		# and triggering the targets receiver method.
@@ -294,8 +315,8 @@ class Actor(Entity):
 		damage_dice = max((effective_ST - 3) // 8, 1)
 		damage_mod = (effective_ST - 3) % 8 // 2 - 1 if effective_ST >= 11 else (effective_ST + 1) // 2 - 7
 		power = dice.roll(damage_dice, mod = damage_mod)
-		damage_type = DamageType.CUT if attack_template["damage_type"] == "cut" else DamageType.BASH
-		attack = Attack(power, DamageType.CUT if self.is_player else DamageType.BASH, acc)
+		damage_type = attack_template["damage_type"]
+		attack = Attack(power, damage_type, acc, target = target_part)
 		target.receive_attack(self, attack)
 		self.delay = 10
 
