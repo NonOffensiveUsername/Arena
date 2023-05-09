@@ -79,5 +79,7 @@
 		"display": {
 			"character": "%"
 		}
-	}
+	},
+	"sack": {},
+	"rock": {}
 }

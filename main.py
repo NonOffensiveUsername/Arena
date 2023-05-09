@@ -1,8 +1,6 @@
-from entity import Entity, EntityContainer
-import entity
-from actor import Actor
-import actor
-from tile import Tile, TileContainer
+from entity import *
+from actor import *
+from tile import *
 from structs import *
 from gui import Interface
 import widget
@@ -20,14 +18,27 @@ tiles = loader.load_map(mat_dict, "map")
 player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
 player.seen = set()
 player.currently_seen = set()
-feloid = actor.RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
-kobold = actor.Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
+feloid = RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
+kobold = Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
 kobold.target = player
-genie = actor.Actor.from_template("Genie", (45, 10), template_dict["spirit"])
+genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
 axe = Entity.from_template("Axe", (5, 7), template_dict["axe"])
+
+sack = Entity.from_template("[128,128,0]Burlap sack[w]", (4, 6), template_dict["sack"])
+stuff_in_sack = [
+	Entity.from_template("Shiny pebble", None, template_dict["rock"]),
+	Entity.from_template("Dull pebble", None, template_dict["rock"]),
+	Entity.from_template("[128,128,0]Velvet sack[w]", None, template_dict["sack"]),
+	Entity.from_template("Colorful pebble", None, template_dict["rock"]),
+]
+magic_pebble = Entity.from_template("[b]Magic pebble[w]", None, template_dict["rock"])
+
+sack.contents = stuff_in_sack
+sack.contents[2].contents = [magic_pebble]
 
 entities = EntityContainer()
 entities.add_entity(player, kobold, feloid, genie, axe)
+entities.add_entity(sack, *stuff_in_sack, magic_pebble)
 
 # Creating the UI
 UI = Interface()
@@ -125,6 +136,14 @@ def examine():
 	UI.pop_widget()
 	UI.pop_widget()
 
+def show_inventory():
+	inventory_items = player.build_contents_tree()
+	inv_listbox = widget.ListBox(3, 2, 30, 15, "Inventory", inventory_items)
+	UI.register(inv_listbox)
+	while key := poll().symbol:
+		if key == 'escape': break
+	UI.pop_widget()
+
 # Main loop
 
 update_UI()
@@ -136,7 +155,7 @@ while UI.is_alive():
 	key = event.symbol
 
 	if key == '`': # debug key, effect subject to change
-		print(player.root_part.get_parts_with_trait(PartFlag.GRASPER)[0].held.melee_attacks)
+		print(player.build_contents_tree())
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break
@@ -183,6 +202,8 @@ while UI.is_alive():
 		if event.shift:
 			target_part = pick_named_object_from_list("Which part?", target.root_part.get_part_list())
 		player.send_attack(target, target_part)
+	elif key == 'i':
+		show_inventory()
 
 	entities.process(tiles)
 	update_UI()

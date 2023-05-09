@@ -253,6 +253,36 @@ class Entity:
 	def can_be_picked_up(self, picker):
 		return True
 
+	def build_contents_tree(self, prefix = ()):
+		out = []
+		for i in range(len(self.contents)):
+			if len(prefix) > 0:
+				prefix = prefix[:-1] + (prefix[-1] - 1,)
+
+			str_prefix = "[y]"
+			for e in range(o := len(prefix)):
+				if prefix[e] > 0:
+					if e == o - 1:
+						str_prefix += '\xC3\xC4'
+					else:
+						str_prefix += '\xB3 '
+				elif prefix[e] == 0:
+					if e == o - 1:
+						str_prefix += '\xC0\xC4'
+					else:
+						str_prefix += '  '
+				else:
+					str_prefix += '  '
+			str_prefix += '[w]'
+
+			out.append(str_prefix + self.contents[i].name)
+
+			if self.contents[i].contents:
+				new_prefix = prefix + (len(self.contents[i].contents),)
+				out += self.contents[i].build_contents_tree(new_prefix)
+
+		return out
+
 class EntityContainer:
 	def __init__(self):
 		self.contents = []
