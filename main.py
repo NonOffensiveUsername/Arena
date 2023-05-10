@@ -8,6 +8,7 @@ import tilemappings
 import util
 import loader
 import time
+import copy
 
 mat_dict = loader.load_materials()
 template_dict = loader.load_templates()
@@ -39,6 +40,12 @@ sack.contents[2].contents = [magic_pebble]
 entities = EntityContainer()
 entities.add_entity(player, kobold, feloid, genie, axe)
 entities.add_entity(sack, *stuff_in_sack, magic_pebble)
+
+# Test tile features
+grass = TileFeature(-1, mat_dict["vegetation"], True, symbol = Glyph('"', fg = (0, 255, 0)))
+for i in range(10, 30):
+	for e in range(3, 7):
+		tiles.contents[(i, e)].add_feature(copy.copy(grass))
 
 # Creating the UI
 UI = Interface()

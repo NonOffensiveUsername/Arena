@@ -7,46 +7,64 @@ class Tile:
 		self.wall_material = wall_material
 		self.floor_material = floor_material
 		self.ceiling_material = ceiling_material
+		self._features = []
+
+	@property
+	def features(self):
+		return tuple(self._features)
+
+	def add_feature(self, feature):
+		self._features.append(feature)
+		self._features.sort(key = lambda x: x.z_index)
 
 	# Movement point cost of moving through the tile
 	def traversal_cost(self, flyer = False):
+		cost = -1
 		if self.wall_material.state == State.GAS:
-			return 10
+			cost = 10
 		elif self.wall_material.state == State.LIQUID:
-			return 30
-		else:
-			return -1
+			cost = 30
+		for feature in self._features:
+			cost *= feature.walkability
+		return cost
 
 	# How likely a projectile is to strike the tile instead of passing through it
 	def cover(self):
-		if self.wall_material.state == State.SOLID:
-			return 1
-		else:
-			return 0
-
-	# How much the tile blocks light
-	def opacity(self):
-		return 0
+		return int(self.wall_material.state == State.SOLID)
 
 	def copy(self):
 		newTile = Tile(self.wall_material, self.floor_material, self.ceiling_material)
+		newTile._features = self._features.copy()
 		return newTile
 
 	def is_void(self):
 		return False
 
 class VoidTile(Tile):
+	VOID = Material("void", State.VOID, 0, 0, 1, '?', 0, 0, 0)
+
 	def __init__(self):
-		VOID = Material("void", State.VOID, 0, 0, 1, '?', 0, 0, 0)
-		self.wall_material = VOID
-		self.floor_material = VOID
-		self.ceiling_material = VOID
+		self.wall_material = VoidTile.VOID
+		self.floor_material = VoidTile.VOID
+		self.ceiling_material = VoidTile.VOID
 
 	def traversal_cost(self):
 		return -1
 
 	def is_void(self):
 		return True
+
+class TileFeature:
+	def __init__(self, z_index, material = None, fg_overwrite = False, bg_overwrite = False,
+		char_overwrite = False, symbol = None, walkability = 1.0, visibility = 1):
+		self.z_index = z_index
+		self.material = material
+		self.fg_overwrite = fg_overwrite
+		self.bg_overwrite = bg_overwrite
+		self.char_overwrite = char_overwrite
+		self.symbol = symbol
+		self.walkability = walkability
+		self.visibility = visibility
 
 class TileContainer:
 	def __init__(self, contents, width, height):
@@ -72,11 +90,11 @@ class TileContainer:
 			targets.append((self.width, i))
 		for t in targets:
 			line = util.bresenham_line(*position, *t)
-			opaque = False
+			visibility = 1.0
 			for point in line:
-				if opaque: break
+				if visibility < .1: break
 				visible_tiles.add(point)
-				opaque = self.opacity_grid.get(point, True)
+				visibility *= 1 - self.opacity_grid.get(point, 0.0)
 		return visible_tiles
  
 	def get_neighbors(self, x, y):
@@ -161,13 +179,14 @@ class TileContainer:
 			result[x] = func(self.contents, x)
 		return result
 
+	# This is currently coupled too tightly to the definition of visual mapper
 	def map_visible(self, func, position, sees, seen):
 		result = {}
 		for x in self.contents:
 			if x in sees:
 				result[x] = func(self.contents, x)
 			elif x in seen:
-				result[x] = func(self.contents, x, 0.5)
+				result[x] = func(self.contents, x, 0.4)
 		return result
 
 	def get_tile(self, x, y):
@@ -178,4 +197,4 @@ class TileContainer:
 
 	def set_tile(self, x, y, tile):
 		self.contents[(x, y)] = tile.copy()
-		self.construct_opacity_grid() # Might want to make the tiles themselves signal up to their container upon opacity change
+		self.construct_opacity_grid()

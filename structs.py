@@ -4,23 +4,11 @@ import re
 import util
 
 class State(Enum):
-	SOLID = 1
-	LIQUID = 2
-	GAS = 3
-	PHANTASMAL = 4
-	VOID = 5
-
-def string_to_state(state):
-	if state == "solid":
-		return State.SOLID
-	elif state == "liquid":
-		return State.LIQUID
-	elif state == "gas":
-		return State.GAS
-	elif state == "phantasmal":
-		return State.PHANTASMAL
-	else:
-		return State.VOID
+	SOLID = "solid"
+	LIQUID = "liquid"
+	GAS = "gas"
+	PHANTASM = "phantasm"
+	VOID = "void"
 
 class Mood(Enum):
 	NEUTRAL = 1

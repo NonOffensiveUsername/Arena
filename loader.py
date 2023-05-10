@@ -10,7 +10,7 @@ def load_materials():
 	
 	mats = {}
 	for material in mats_obj:
-		material["state"] = string_to_state(material["state"])
+		material["state"] = State(material["state"])
 		mats[material["name"]] = Material(**material)
 
 	return mats

@@ -12,6 +12,18 @@
 		"smooth":true
 	},
 	{
+		"name": "glass",
+		"state": "solid",
+		"density": 2,
+		"hardness": 3,
+		"opacity": 0,
+		"texture": 254,
+		"fg": [180, 255, 255],
+		"bg": [0, 0, 0],
+		"floor_color": [180, 255, 255],
+		"smooth": true
+	},
+	{
 		"name":"dirt",
 		"state":"solid",
 		"density":1.5,
