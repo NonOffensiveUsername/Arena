@@ -180,6 +180,8 @@ while UI.is_alive():
 		if not player.move(tiles, move_binds[key]): continue
 	elif key == 's':
 		player.delay = 10
+	elif key == '.':
+		player.delay = 1
 	elif key == 'c':
 		x = get_single_menu_selection("Cast Spell:", ['Fireball', 'Invisibility', 'Heal'])
 		print(x)

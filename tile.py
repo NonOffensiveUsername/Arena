@@ -81,7 +81,7 @@ class TileContainer:
  
 	def get_neighbors(self, x, y):
 		neighbors = []
-		for direction in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)):
+		for direction in util.MOORE_NEIGHBORHOOD:
 			neighbor_x = x + direction[0]
 			neighbor_y = y + direction[1]
 			if (neighbor_x, neighbor_y) not in self.contents:

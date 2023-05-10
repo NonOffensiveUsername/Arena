@@ -323,7 +323,7 @@ class EntityContainer:
 
 	def get_neighbors(self, e, exclude_self = True):
 		targets = []
-		for direction in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)):
+		for direction in util.MOORE_NEIGHBORHOOD_INCLUSIVE:
 			targets.append(util.tup_add(e.position, direction))
 		neighbors = self.find_in(targets)
 		if exclude_self and e in neighbors: neighbors.remove(e)

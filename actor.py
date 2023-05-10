@@ -136,7 +136,7 @@ class Chaser(Actor):
 		if self.hp <= 0 or self.position is None:
 			self.delay = 1000
 			return
-		dist_from_target = util.dist_between(self.position, self.target.position)
+		dist_from_target = util.manhattan_dist(self.position, self.target.position)
 		if dist_from_target > 1:
 			next_square = game_state.next_step_towards(self.position, self.target.position)
 			direction = (next_square[0] - self.position[0], next_square[1] - self.position[1])

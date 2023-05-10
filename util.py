@@ -2,6 +2,11 @@ import math
 import random
 from copy import copy
 
+MOORE_NEIGHBORHOOD = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+MOORE_NEIGHBORHOOD_INCLUSIVE = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1))
+NEUMANN_NEIGHBORHOOD = ((-1, 0), (0, -1), (0, 1), (1, 0))
+NEUMANN_NEIGHBORHOOD_INCLUSIVE = ((-1, 0), (0, -1), (0, 0), (0, 1), (1, 0))
+
 def bresenham_line(x0, y0, x1, y1):
 	dx = abs(x1 - x0)
 	dy = abs(y1 - y0)
@@ -29,7 +34,7 @@ def bresenham_line(x0, y0, x1, y1):
 
 	return points
 
-def dist_between(a, b):
+def manhattan_dist(a, b):
 	return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
 
 def dir_between(a, b):

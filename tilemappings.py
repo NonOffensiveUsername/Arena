@@ -1,5 +1,5 @@
 from structs import *
-from util import tup_add, color_mul
+from util import tup_add, color_mul, NEUMANN_NEIGHBORHOOD
 
 floor_glyphs = {
 	0: '.',
@@ -16,21 +16,21 @@ floor_glyphs = {
 
 smooth_glyphs = {
 	(False, False, False, False): 'O',
-	(True, False, False, False): 205,
-	(False, True, False, False): 186,
-	(True, True, False, False): 188,
-	(False, False, True, False): 186,
-	(True, False, True, False): 187,
-	(False, True, True, False): 186,
-	(True, True, True, False): 185,
-	(False, False, False, True): 205,
-	(True, False, False, True): 205,
-	(False, True, False, True): 200,
-	(True, True, False, True): 197,
-	(False, False, True, True): 201,
-	(True, False, True, True): 187,
-	(False, True, True, True): 204,
-	(True, True, True, True): 206
+	(True,  False, False, False): 205,
+	(False, True,  False, False): 186,
+	(True,  True,  False, False): 188,
+	(False, False, True,  False): 186,
+	(True,  False, True,  False): 187,
+	(False, True,  True,  False): 186,
+	(True,  True,  True,  False): 185,
+	(False, False, False, True ): 205,
+	(True,  False, False, True ): 205,
+	(False, True,  False, True ): 200,
+	(True,  True,  False, True ): 197,
+	(False, False, True,  True ): 201,
+	(True,  False, True,  True ): 187,
+	(False, True,  True,  True ): 204,
+	(True,  True,  True,  True ): 206,
 }
 
 def visual_map_func(tiles, position, brightness = 1.0):
@@ -39,7 +39,7 @@ def visual_map_func(tiles, position, brightness = 1.0):
 	if tile.wall_material.state == State.SOLID or tile.floor_material.state != State.SOLID:
 		if tile.wall_material.smooth:
 			neighbors = []
-			for direction in ((-1, 0), (0, -1), (0, 1), (1, 0)):
+			for direction in NEUMANN_NEIGHBORHOOD:
 				x = tup_add(position, direction)
 				if x in tiles and tiles[x].wall_material.smooth:
 					neighbors.append(True)
