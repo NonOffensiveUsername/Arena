@@ -36,7 +36,7 @@ smooth_glyphs = {
 def visual_map_func(tiles, position, brightness = 1.0):
 	tile = tiles[position]
 	result = None
-	if tile.wall_material.state == State.SOLID or tile.floor_material.state != State.SOLID:
+	if tile.wall_material.state == State.SOLID:
 		if tile.wall_material.smooth:
 			neighbors = []
 			for direction in NEUMANN_NEIGHBORHOOD:
@@ -49,7 +49,7 @@ def visual_map_func(tiles, position, brightness = 1.0):
 		else:
 			result = Glyph(tile.wall_material.texture, tile.wall_material.fg, tile.wall_material.bg)
 	else:
-		char = floor_glyphs[position.__hash__() % 10] if not tile.floor_material.smooth else '+'
+		char = floor_glyphs[position.__hash__() % 10] if not tile.floor_material.smooth else tile.floor_material.texture
 		result = Glyph(char, tile.floor_material.floor_color, (0, 0, 0))
 	for feature in tile.features:
 		if feature.z_index < 0 and tile.wall_material.state == State.SOLID: break
@@ -65,4 +65,7 @@ def visual_map_func(tiles, position, brightness = 1.0):
 
 def opacity(tiles, position):
 	tile = tiles[position]
-	return tile.wall_material.opacity
+	result = tile.wall_material.opacity
+	for feature in tile.features:
+		result = max(result, 1 - feature.visibility)
+	return result

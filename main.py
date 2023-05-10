@@ -15,37 +15,59 @@ template_dict = loader.load_templates()
 Entity.DEFAULT_MAT = mat_dict["flesh"]
 tiles = loader.load_map(mat_dict, "map")
 
-# Test entities
-player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
-player.seen = set()
-player.currently_seen = set()
-feloid = RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
-kobold = Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
-kobold.target = player
-genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
-axe = Entity.from_template("Axe", (5, 7), template_dict["axe"])
+DEBUG = True
 
-sack = Entity.from_template("[128,128,0]Burlap sack[w]", (4, 6), template_dict["sack"])
-stuff_in_sack = [
-	Entity.from_template("Shiny pebble", None, template_dict["rock"]),
-	Entity.from_template("Dull pebble", None, template_dict["rock"]),
-	Entity.from_template("[128,128,0]Velvet sack[w]", None, template_dict["sack"]),
-	Entity.from_template("Colorful pebble", None, template_dict["rock"]),
-]
-magic_pebble = Entity.from_template("[b]Magic pebble[w]", None, template_dict["rock"])
+if DEBUG:
+	# Test entities
+	player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
+	player.seen = set()
+	player.currently_seen = set()
+	feloid = RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
+	kobold = Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
+	kobold.target = player
+	genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
+	axe = Entity.from_template("Axe", (5, 7), template_dict["axe"])
 
-sack.contents = stuff_in_sack
-sack.contents[2].contents = [magic_pebble]
+	sack = Entity.from_template("[128,128,0]Burlap sack[w]", (4, 6), template_dict["sack"])
+	stuff_in_sack = [
+		Entity.from_template("Shiny pebble", None, template_dict["rock"]),
+		Entity.from_template("Dull pebble", None, template_dict["rock"]),
+		Entity.from_template("[128,128,0]Velvet sack[w]", None, template_dict["sack"]),
+		Entity.from_template("Colorful pebble", None, template_dict["rock"]),
+	]
+	magic_pebble = Entity.from_template("[b]Magic pebble[w]", None, template_dict["rock"])
 
-entities = EntityContainer()
-entities.add_entity(player, kobold, feloid, genie, axe)
-entities.add_entity(sack, *stuff_in_sack, magic_pebble)
+	sack.contents = stuff_in_sack
+	sack.contents[2].contents = [magic_pebble]
 
-# Test tile features
-grass = TileFeature(-1, mat_dict["vegetation"], True, symbol = Glyph('"', fg = (0, 255, 0)))
-for i in range(10, 30):
-	for e in range(3, 7):
-		tiles.contents[(i, e)].add_feature(copy.copy(grass))
+	entities = EntityContainer()
+	entities.add_entity(player, kobold, feloid, genie, axe)
+	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
+
+	# Test tile features
+	grass = TileFeature(-1, mat_dict["vegetation"], True, symbol = Glyph('"', fg = (0, 255, 0)))
+	for i in range(10, 30):
+		for e in range(3, 7):
+			tiles.contents[(i, e)].add_feature(copy.copy(grass))
+
+	#bush = TileFeature(-1, mat_dict["vegetation"], True,
+	#	char_overwrite = True, symbol = Glyph('"', fg = (0, 255, 0)),
+	#	walkability = 1.5, visibility = 0.4)
+	#for i in range(45, 51):
+	#	for e in range(10, 16):
+	#		tiles.contents[(i, e)].add_feature(copy.copy(bush))
+
+	flow_glyph = UnstableGlyph(
+		('~', 247),
+		((255, 255, 255)),
+		((0, 0, 0))
+	)
+	fluid_flow = TileFeature(-1, None, char_overwrite = True, symbol = flow_glyph)
+	for tile in tiles.contents:
+		if tiles.contents[tile].floor_material.state == State.LIQUID:
+			tiles.contents[tile].add_feature(copy.copy(fluid_flow))
+
+	tiles.construct_opacity_grid()
 
 # Creating the UI
 UI = Interface()
@@ -162,7 +184,7 @@ while UI.is_alive():
 	key = event.symbol
 
 	if key == '`': # debug key, effect subject to change
-		print(player.build_contents_tree())
+		print(tiles.opacity_grid[(47, 13)])
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break
@@ -215,4 +237,3 @@ while UI.is_alive():
 		show_inventory()
 
 	entities.process(tiles)
-	update_UI()

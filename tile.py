@@ -56,7 +56,7 @@ class VoidTile(Tile):
 
 class TileFeature:
 	def __init__(self, z_index, material = None, fg_overwrite = False, bg_overwrite = False,
-		char_overwrite = False, symbol = None, walkability = 1.0, visibility = 1):
+		char_overwrite = False, symbol = None, walkability = 1.0, visibility = 1, flags = ()):
 		self.z_index = z_index
 		self.material = material
 		self.fg_overwrite = fg_overwrite
@@ -65,6 +65,7 @@ class TileFeature:
 		self.symbol = symbol
 		self.walkability = walkability
 		self.visibility = visibility
+		self.flags = flags
 
 class TileContainer:
 	def __init__(self, contents, width, height):

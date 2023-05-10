@@ -2,6 +2,7 @@ from enum import Enum
 #from dataclasses import dataclass
 import re
 import util
+import random
 
 class State(Enum):
 	SOLID = "solid"
@@ -94,16 +95,35 @@ class Glyph:
 		self.bg = tuple(bg)
 
 	def __repr__(self):
-		if type(self.character) == int:
-			return f"Glyph({self.character}, fg = {self.fg}, bg = {self.bg})"
-		return f"Glyph('{self.character}', fg = {self.fg}, bg = {self.bg})"
+		if type(x := self.character) == int:
+			return f"Glyph({x}, fg = {self.fg}, bg = {self.bg})"
+		return f"Glyph('{x}', fg = {self.fg}, bg = {self.bg})"
 
 	# Gets the actual integer representing the character's position on the code page
 	@property
 	def code(self):
-		if type(self.character) == int:
-			return self.character
-		return ord(self.character)
+		if type(x := self.character) == int:
+			return x
+		return ord(x)
+
+class UnstableGlyph(Glyph):
+	def __init__(self, characters, fgs, bgs):
+		self.characters = characters
+		self.fgs = fgs
+		self.bgs = bgs
+
+	@property
+	def character(self):
+		return random.choice(self.characters)
+
+	@property
+	def fg(self):
+		return random.choice(self.fgs)
+	
+	@property
+	def bg(self):
+		return random.choice(self.bgs)
+	
 
 class GlyphString(list):
 	# Regex that matches triplets of comma seperated integers in brackets or

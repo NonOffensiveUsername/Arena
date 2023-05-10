@@ -4,7 +4,7 @@
 		"floor_material":"stone",
 		"ceiling_material":"stone"
 	},
-	".":{
+	" ":{
 		"wall_material":"air",
 		"floor_material":"dirt",
 		"ceiling_material":"air"
@@ -23,5 +23,15 @@
 		"wall_material": "air",
 		"floor_material": "stone",
 		"ceiling_material": "stone"
+	},
+	".": {
+		"wall_material": "air",
+		"floor_material": "sand",
+		"ceiling_material": "air"
+	},
+	"~": {
+		"wall_material": "air",
+		"floor_material": "water",
+		"ceiling_material": "air"
 	}
 }
