@@ -109,6 +109,8 @@ def update_UI():
 
 TICK_RATE = 1/100
 def poll():
+	player.currently_seen = tiles.visible_from(player.position)
+	player.seen = player.seen.union(player.currently_seen)
 	update_UI()
 	cur_time = None
 	while True:
@@ -198,8 +200,6 @@ player.seen = player.seen.union(player.currently_seen)
 update_UI()
 
 while event := poll():
-	player.currently_seen = tiles.visible_from(player.position)
-	player.seen = player.seen.union(player.currently_seen)
 	key = event.symbol
 
 	if key == '`': # debug key, effect subject to change
@@ -256,7 +256,6 @@ while event := poll():
 		show_inventory()
 	elif key == 'd':
 		if (drop_target := select_inventory_item()) is None: continue
-		print(drop_target.name)
 		player.drop(drop_target)
 
 	entities.process(tiles)
