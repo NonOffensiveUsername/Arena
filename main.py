@@ -133,6 +133,7 @@ def get_single_menu_selection(title, options):
 			break
 		menu.pointer %= len(menu.options)
 	UI.pop_widget()
+	if not options: return None
 	return result
 
 def pick_adjacent_entity(prompt):
@@ -172,6 +173,12 @@ def show_inventory():
 	while key := poll().symbol:
 		if key == 'escape': break
 	UI.pop_widget()
+
+def select_inventory_item():
+	inventory_items = player.build_contents_tree()
+	target = get_single_menu_selection("Drop what?", inventory_items)
+	if target is None: return None
+	return player._contents[target] # TODO: make this not rely on internal field
 
 # Main loop
 
@@ -235,5 +242,9 @@ while UI.is_alive():
 		player.send_attack(target, target_part)
 	elif key == 'i':
 		show_inventory()
+	elif key == 'd':
+		if (drop_target := select_inventory_item()) is None: continue
+		print(drop_target.name)
+		player.drop(drop_target)
 
 	entities.process(tiles)

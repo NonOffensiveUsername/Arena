@@ -105,11 +105,14 @@ class Actor(Entity):
 			return False
 		if not target.can_be_picked_up(self):
 			return False
-		target.position = None
-		target.container = self
-		self.contents.append(target)
+		self.insert(target)
 		used_hand.held = target
+		self.delay += 10
 		return True
+
+	def drop(self, target):
+		self.remove(target)
+		self.delay += 10 # TODO: held items drop easier
 
 	def can_be_picked_up(self, picker):
 		if self.dodge():

@@ -91,7 +91,7 @@ class Entity:
 
 	def __init__(self, name, position, is_player = False):
 		self.name = name
-		self.contents = []
+		self._contents = []
 		self.position = position
 		self.container = None
 		self.delay = 0
@@ -255,7 +255,7 @@ class Entity:
 
 	def build_contents_tree(self, prefix = ()):
 		out = []
-		for i in range(len(self.contents)):
+		for i in range(len(self._contents)):
 			if len(prefix) > 0:
 				prefix = prefix[:-1] + (prefix[-1] - 1,)
 
@@ -275,13 +275,30 @@ class Entity:
 					str_prefix += '  '
 			str_prefix += '[w]'
 
-			out.append(str_prefix + self.contents[i].name)
+			out.append(str_prefix + self._contents[i].name)
 
-			if self.contents[i].contents:
-				new_prefix = prefix + (len(self.contents[i].contents),)
-				out += self.contents[i].build_contents_tree(new_prefix)
+			if self._contents[i]._contents:
+				new_prefix = prefix + (len(self._contents[i]._contents),)
+				out += self._contents[i].build_contents_tree(new_prefix)
 
 		return out
+
+	def remove(self, target):
+		if target not in self._contents: return False
+		target.position = self.position
+		target.container = None
+		self._contents.remove(target)
+		for part in self.root_part.get_part_list():
+			if part.held is target:
+				part.held = None
+				break
+		return True
+
+	def insert(self, target):
+		if target in self._contents: return False
+		target.container = self
+		target.position = None
+		self._contents.append(target)
 
 class EntityContainer:
 	def __init__(self):
