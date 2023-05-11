@@ -26,6 +26,17 @@ if DEBUG:
 	kobold = Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
 	kobold.target = player
 	genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
+	crab = TetheredWanderer.from_template("Crab", (49, 10), template_dict["crab"])
+	crab.tether = (
+		(49, 10),
+		(49, 11),
+		(49, 12),
+		(49, 13),
+		(50, 10),
+		(50, 11),
+		(50, 12),
+		(50, 13),
+	)
 	axe = Entity.from_template("Axe", (5, 7), template_dict["axe"])
 
 	sack = Entity.from_template("[128,128,0]Burlap sack[w]", (4, 6), template_dict["sack"])
@@ -37,11 +48,13 @@ if DEBUG:
 	]
 	magic_pebble = Entity.from_template("[b]Magic pebble[w]", None, template_dict["rock"])
 
-	sack.contents = stuff_in_sack
-	sack.contents[2].contents = [magic_pebble]
+	for thing in stuff_in_sack:
+		sack.insert(thing)
+
+	sack._contents[2].insert(magic_pebble)
 
 	entities = EntityContainer()
-	entities.add_entity(player, kobold, feloid, genie, axe)
+	entities.add_entity(player, kobold, feloid, genie, crab, axe)
 	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
 
 	# Test tile features

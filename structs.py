@@ -24,6 +24,8 @@ class DamageType(Enum):
 
 class BodyType(Enum):
 	HUMANOID = "humanoid"
+	QUADRUPED = "quadruped"
+	CARCINOID = "carcinoid"
 	SIMPLE = "simple"
 
 class PartFlag(Enum):

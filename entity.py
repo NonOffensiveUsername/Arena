@@ -179,6 +179,25 @@ class Entity:
 			r_leg.add_children(r_foot)
 	
 			self.root_part =  root
+		elif bodyplan == BodyType.CARCINOID:
+			root = BodyPart("Thorax", 0, traits = [PartFlag.VITALS])
+			head = BodyPart("Head", -7, traits = [PartFlag.MIND])
+			eyes = BodyPart("Eyes", -9, 10, traits = [PartFlag.SIGHT])
+			l_arm = BodyPart("Left arm", -2, 2, traits = [PartFlag.LEVER])
+			r_arm = BodyPart("Right arm", -2, 2, traits = [PartFlag.LEVER])
+			l_hand = BodyPart("Left hand", -4, 3, traits = [PartFlag.SECONDARY_GRASPER, PartFlag.STRIKER])
+			r_hand = BodyPart("Right hand", -4, 3, traits = [PartFlag.GRASPER, PartFlag.STRIKER])
+			front_l_leg = BodyPart("Front left leg", -2, 2, traits = [PartFlag.LEVER, PartFlag.WALKER, PartFlag.BALANCER])
+			back_l_leg = BodyPart("Back left leg", -2, 2, traits = [PartFlag.LEVER, PartFlag.WALKER, PartFlag.BALANCER])
+			front_r_leg = BodyPart("Front right leg", -2, 2, traits = [PartFlag.LEVER, PartFlag.WALKER, PartFlag.BALANCER])
+			back_r_leg = BodyPart("Back right leg", -2, 2, traits = [PartFlag.LEVER, PartFlag.WALKER])
+
+			root.add_children(head, l_arm, r_arm, front_r_leg, front_l_leg, back_r_leg, back_l_leg)
+			head.add_children(eyes)
+			l_arm.add_children(l_hand)
+			r_arm.add_children(r_hand)
+
+			self.root_part = root
 		else:
 			self.root_part = BodyPart("Mass", 0, traits = [PartFlag.SIMPLE])
 

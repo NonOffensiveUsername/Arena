@@ -56,6 +56,22 @@
 			"fg": [0, 221, 255]
 		}
 	},
+	"crab": {
+		"bodyplan": "carcinoid",
+		"attribute": {
+			"size": -5,
+			"ST": 3,
+			"IQ": 3
+		},
+		"trait": {
+			"damage_resistance": 2,
+			"speed_boost": -1
+		},
+		"display": {
+			"character": 15,
+			"fg": [255, 0, 0]
+		}
+	},
 	"axe": {
 		"attribute": {
 			"ST": 6,

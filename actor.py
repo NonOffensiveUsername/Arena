@@ -146,3 +146,22 @@ class Chaser(Actor):
 			self.move(game_state, direction)
 		else:
 			self.send_attack(self.target)
+
+class TetheredWanderer(Actor):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.target_position = self.position
+
+	def update(self, game_state):
+		if self.hp <= 0 or self.position is None:
+			self.delay = 1000
+			return
+		dist_from_target = util.manhattan_dist(self.position, self.target_position)
+		if dist_from_target > 0:
+			next_square = game_state.next_step_towards(self.position, self.target_position)
+			direction = (next_square[0] - self.position[0], next_square[1] - self.position[1])
+			self.move(game_state, direction)
+			return
+		if random.randint(0, 9) < 2:
+			self.target_position = random.choice(self.tether)
+		self.delay = 10
