@@ -71,31 +71,5 @@
 			"character": 15,
 			"fg": [255, 0, 0]
 		}
-	},
-	"axe": {
-		"attribute": {
-			"ST": 6,
-			"HT": 12
-		},
-		"trait": {
-			"injury_tolerance": "homogenous"
-		},
-		"melee_attacks": [
-			{
-				"skill": "axe_mace",
-				"quality": 0,
-				"muscle": "swing",
-				"damage_type": "cut",
-				"damage_mod": 2,
-				"ST_requirement": 11,
-				"reach": [1],
-				"parry_flags": "U"
-			}
-		],
-		"display": {
-			"character": "%"
-		}
-	},
-	"sack": {},
-	"rock": {}
+	}
 }
