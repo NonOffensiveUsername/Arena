@@ -1,29 +1,23 @@
-from threading import Thread
 from structs import *
 import sdl
 from collections import ChainMap
 
-class Interface(Thread):
+class Interface():
 
 	def __init__(self):
-
-		Thread.__init__(self)
-		self.isInitialized = False
-		self.daemon = True
-		self.start()
-		
-	def run(self):
 		self.window = sdl.Window("test", 200, 200, 800, 400) # 100x25 glyphs
 		self.window.flush()
 		self.window.update()
 		self.frame_buffer = ChainMap({}, {})
 		self.widgets = []
 		self.events = []
+		self.alive = True
 
-		self.isInitialized = True
-
-		while not self.window.quit:
-			self.events += self.window.poll()
+	def update_queue(self):	
+		self.events += self.window.poll()
+		if self.window.quit:
+			self.alive = False
+			del(self.window)
 
 	@property
 	def base(self):

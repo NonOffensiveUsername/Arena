@@ -69,11 +69,7 @@ if DEBUG:
 
 	tiles.construct_opacity_grid()
 
-# Creating the UI
 UI = Interface()
-# Wait for the UI to finish initializing in its own thread before we interact with it
-while not UI.isInitialized:
-	pass
 
 shoutbox = widget.Shoutbox(0, 20, 100, 5)
 UI.register(shoutbox)
@@ -98,16 +94,18 @@ def update_UI():
 	UI.entity_layer = entities.build_grid(player.currently_seen)
 	UI.draw()
 
-TICK_RATE = 1/60
+TICK_RATE = 1/100
 def poll():
 	update_UI()
 	cur_time = None
-	while UI.is_alive():
+	while True:
 		cur_time = time.time()
+		UI.update_queue()
+		if not UI.alive: break
 		if UI.events:
 			return UI.events.pop(0)
 		else:
-			time.sleep(TICK_RATE - (time.time() - cur_time))
+			time.sleep(max(TICK_RATE - (time.time() - cur_time), 0))
 	return False
 
 def get_dir():
@@ -182,16 +180,17 @@ def select_inventory_item():
 
 # Main loop
 
+player.currently_seen = tiles.visible_from(player.position)
+player.seen = player.seen.union(player.currently_seen)
 update_UI()
 
-while UI.is_alive():
+while event := poll():
 	player.currently_seen = tiles.visible_from(player.position)
 	player.seen = player.seen.union(player.currently_seen)
-	event = poll()
 	key = event.symbol
 
 	if key == '`': # debug key, effect subject to change
-		print(tiles.opacity_grid[(47, 13)])
+		print(player.root_part.__str__())
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break
