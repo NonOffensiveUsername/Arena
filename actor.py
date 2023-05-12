@@ -14,6 +14,7 @@ default_actor_attributes = {
 	"trait": {},
 	"bodyplan": BodyType.HUMANOID,
 	"use_cases": [],
+	"factions": [],
 	"melee_attacks": [
 		{
 			"skill": "brawling",
@@ -44,6 +45,14 @@ class Actor(Entity):
 		self.speed = (self.DX + self.HT) / 4
 		if "speed_boost" in self.traits:
 			self.speed += self.traits["speed_boost"]
+
+	def get_held_entities(self):
+		result = []
+		hands = self.root_part.get_parts_with_trait(PartFlag.GRASPER)
+		for hand in hands:
+			if hand.held:
+				result.append([hand, hand.held])
+		return result
 
 	def send_attack(self, target, target_part = None):
 		# This all sucks, attack should be selected outside this function

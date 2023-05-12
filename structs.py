@@ -129,11 +129,12 @@ class UnstableGlyph(Glyph):
 
 class GlyphString(list):
 	# Regex that matches triplets of comma seperated integers in brackets or
-	# a single lowercase letter in brackets. Integer triplets are RPG values
+	# a single lowercase letter in brackets. Integer triplets are RGB values
 	# and single character tags are shortcuts for certain triplets. A tag
-	# changes all the text that follows until a new tag overwrites it.
-	# Examples: [255, 255, 255] [0,128,255] [r] [b]
-	tag_definition = re.compile(r"\[\d+, ?\d+, ?\d+\]|\[[a-z]\]")
+	# changes all the text that follows until a new tag overwrites it. Tags
+	# starting with a capital B define background color.
+	# Examples: [255, 255, 255] [B0,128,255] [r] [b]
+	tag_definition = re.compile(r"\[b?\d+, ?\d+, ?\d+\]|\[[a-z]\]")
 
 	color_shortcuts = {
 		'b': (0, 0, 0),			# Black
@@ -154,25 +155,34 @@ class GlyphString(list):
 	def convert(self):
 		self.clear()
 		pure_string = self._raw # Raw with tags stripped out
-		tags = [(0, (255, 255, 255))] # Implicit white tag at start
+		tags = [(0, (255, 255, 255), False)] # Implicit white tag at start
 		while tag := GlyphString.tag_definition.search(pure_string):
 			start, end = tag.start(), tag.end()
 			# Extract content of tag without whitespace or brackets
 			tag_inner = tag.group()[1:-1].replace(' ', '')
+			background = tag_inner[0] == 'B'
+			if background:
+				tag_inner = tag_inner[1:]
 			# Parse tag content into an rgb tuple
 			tag_color = None
+			b_tag_color = None
 			if len(tag_inner) == 1:
 				tag_color = GlyphString.color_shortcuts[tag_inner]
 			else:
 				tag_color = tuple(map(int, tag_inner.split(',')))
-			tags.append((start, tag_color))
+			tags.append((start, tag_color, background))
 			pure_string = util.cut(pure_string, start, end)
 
 		color = (255, 255, 255)
+		b_color = (0, 0, 0)
 		for i in range(len(pure_string)):
 			while tags and tags[0][0] == i:
-				color = tags.pop(0)[1]
-			self.append(Glyph(pure_string[i], fg = color))
+				tag = tags.pop(0)
+				if tag[2]:
+					b_color = tag[1]
+					continue
+				color = tag[1]
+			self.append(Glyph(pure_string[i], fg = color, bg = b_color))
 
 	@property
 	def raw(self):

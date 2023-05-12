@@ -75,6 +75,7 @@ default_entity_attributes = {
 	},
 	"trait": {},
 	"bodyplan": BodyType.SIMPLE,
+	"factions": [],
 	"use_cases": [],
 	"melee_attacks": [],
 	"ranged_attacks": [],
@@ -101,12 +102,15 @@ class Entity:
 		self.material = Entity.DEFAULT_MAT
 		self.traits = {}
 		self.melee_attacks = []
+		self.factions = []
 
 	@classmethod
-	def from_template(cls, name, position, template = {}, is_player = False):
+	def from_template(cls, name, position, *templates, is_player = False):
 		e = cls(name, position, is_player)
 
-		full_template = util.deep_update(cls.DEFAULT_TEMPLATE, template)
+		full_template = util.deep_update(cls.DEFAULT_TEMPLATE, {})
+		for template in templates:
+			full_template = util.deep_update(full_template, template)
 
 		e.display_tile = Glyph(**full_template["display"])
 
@@ -115,6 +119,7 @@ class Entity:
 
 		e.construct_body(full_template["bodyplan"])
 		e.traits = full_template["trait"]
+		e.factions = full_template["factions"]
 		e.melee_attacks = full_template["melee_attacks"]
 		e.calculate_secondaries()
 		e.hp = e.hp_max
