@@ -22,10 +22,10 @@ if DEBUG:
 	player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
 	player.seen = set()
 	player.currently_seen = set()
-	feloid = RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
-	kobold = Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
-	kobold.target = player
-	genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
+	#feloid = RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
+	#kobold = Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
+	#kobold.target = player
+	#genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
 	crab = TetheredWanderer.from_template("Crab", (49, 10), template_dict["crab"])
 	crab.tether = (
 		(49, 10),
@@ -37,7 +37,7 @@ if DEBUG:
 		(50, 12),
 		(50, 13),
 	)
-	axe = Entity.from_template("Axe", (5, 7), template_dict["axe"])
+	axe = Entity.from_template("Axe", (11, 16), template_dict["axe"])
 
 	sack = Entity.from_template("[128,128,0]Burlap sack[w]", (4, 6), template_dict["sack"])
 	stuff_in_sack = [
@@ -53,8 +53,11 @@ if DEBUG:
 
 	sack._contents[2].insert(magic_pebble)
 
+	soyjak = Actor.from_template("Soyjak", (29, 11), template_dict["human"])
+
 	entities = EntityContainer()
-	entities.add_entity(player, kobold, feloid, genie, crab, axe)
+	#entities.add_entity(player, kobold, feloid, genie, crab, axe)
+	entities.add_entity(player, crab, axe, soyjak)
 	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
 
 	# Test tile features
@@ -63,12 +66,11 @@ if DEBUG:
 		for e in range(3, 7):
 			tiles.contents[(i, e)].add_feature(copy.copy(grass))
 
-	#bush = TileFeature(-1, mat_dict["vegetation"], True,
-	#	char_overwrite = True, symbol = Glyph('"', fg = (0, 255, 0)),
-	#	walkability = 1.5, visibility = 0.4)
-	#for i in range(45, 51):
-	#	for e in range(10, 16):
-	#		tiles.contents[(i, e)].add_feature(copy.copy(bush))
+	bush = TileFeature(-1, mat_dict["vegetation"], True,
+		char_overwrite = True, symbol = Glyph('"', fg = (0, 255, 0)),
+		walkability = 1.5, visibility = 0.4)
+	for i in range(11, 14):
+		tiles.contents[(24, i)].add_feature(copy.copy(bush))
 
 	flow_glyph = UnstableGlyph(
 		('~', 247),
@@ -86,6 +88,9 @@ UI = Interface()
 
 shoutbox = widget.Shoutbox(0, 20, 100, 5)
 UI.register(shoutbox)
+
+status_box = widget.ListBox(60, 0, 39, 24, "Status:")
+UI.register(status_box)
 
 # Keys associated with movement directions
 move_binds = {
@@ -105,6 +110,13 @@ def update_UI():
 		shoutbox.add_shout(e.primary)
 	UI.base = intermediate_grid
 	UI.entity_layer = entities.build_grid(player.currently_seen)
+	status_entries = [
+		f"Name: {player.name}",
+		f"HP: [r]{player.hp}/{player.hp_max}"
+	]
+	for grasper, grasped in player.get_held_entities():
+		status_entries.append(f"{grasper.name}: {grasped.name}")
+	status_box.entries = status_entries
 	UI.draw()
 
 TICK_RATE = 1/100
@@ -166,14 +178,24 @@ def pick_named_object_from_list(prompt, options):
 
 def examine():
 	pointer = widget.Pointer(*player.position)
-	entity_list = widget.ListBox(60, 0, 39, 24, "Located Here:")
+	infobox = widget.ListBox(60, 0, 39, 24, "Located Here:")
 	UI.register(pointer)
-	UI.register(entity_list)
+	UI.register(infobox)
 	while key := poll().symbol:
 		if key in move_binds:
 			pointer.nudge(move_binds[key])
 			found_entities = entities.find_at((pointer.x, pointer.y))
-			entity_list.entries = [i.name for i in found_entities]
+			infobox.entries = [i.name for i in found_entities]
+			# TODO: Make tiles report their own info
+			targeted_tile = tiles.get_tile(pointer.x, pointer.y)
+			wall_desc_color = util.triplet_to_tag(targeted_tile.wall_material.fg) + \
+				util.triplet_to_tag(targeted_tile.wall_material.bg, True)
+			wall_entry = f"Wall: {wall_desc_color}{targeted_tile.wall_material.name}"
+			floor_desc_color = util.triplet_to_tag(targeted_tile.floor_material.fg) + \
+				util.triplet_to_tag(targeted_tile.floor_material.bg, True)
+			floor_entry = f"Floor: {floor_desc_color}{targeted_tile.floor_material.name}"
+			infobox.entries.append(wall_entry)
+			infobox.entries.append(floor_entry)
 		elif key == 'escape':
 			break
 	UI.pop_widget()

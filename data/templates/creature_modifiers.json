@@ -1,0 +1,15 @@
+{
+	"zombie": {
+		"factions": ["monster"],
+		"trait": {
+			"injury_tolerance": "undead",
+			"brainless": true,
+			"DX_increase": -2,
+			"IQ_increase": -5,
+			"speed_boost": -1.5
+		},
+		"display": {
+			"fg": [70, 200, 0]
+		}
+	}
+}

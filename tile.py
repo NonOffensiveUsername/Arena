@@ -41,7 +41,7 @@ class Tile:
 		return False
 
 class VoidTile(Tile):
-	VOID = Material("void", State.VOID, 0, 0, 1, '?', 0, 0, 0)
+	VOID = Material("void", State.VOID, 0, 0, 1, '?', (0, 0, 0), (128, 0, 128), (128, 0, 128))
 
 	def __init__(self):
 		self.wall_material = VoidTile.VOID
