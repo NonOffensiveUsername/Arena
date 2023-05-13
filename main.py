@@ -61,7 +61,6 @@ if DEBUG:
 	#entities.add_entity(player, kobold, feloid, genie, crab, axe)
 	entities.add_entity(player, crab, axe, soyjak, gun)
 	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
-
 	flow_glyph = UnstableGlyph(
 		('~', 247),
 		((255, 255, 255),),
