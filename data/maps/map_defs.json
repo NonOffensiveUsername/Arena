@@ -33,5 +33,17 @@
 		"wall_material": "air",
 		"floor_material": "water",
 		"ceiling_material": "air"
+	},
+	"G": {
+		"wall_material": "air",
+		"floor_material": "dirt",
+		"ceiling_material": "air",
+		"features": ["Gravestone"]
+	},
+	"\"": {
+		"wall_material": "air",
+		"floor_material": "dirt",
+		"ceiling_material": "air",
+		"features": ["Bush"]
 	}
 }

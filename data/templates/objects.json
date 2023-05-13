@@ -16,11 +16,73 @@
 				"damage_mod": 2,
 				"ST_requirement": 11,
 				"reach": [1],
-				"parry_flags": "U"
+				"parry_flags": ["U"]
 			}
 		],
 		"display": {
 			"character": "%"
+		}
+	},
+	"bolt action rifle": {
+		"attribute": {
+			"ST": 5
+		},
+		"trait": {
+			"injury_tolerance": "unliving"
+		},
+		"melee_attacks":  [
+			{
+				"skill": "broadsword",
+				"quality": -2,
+				"muscle": "swing",
+				"damage_type": "bash",
+				"damage_mod": 0,
+				"ST_requirement": 11,
+				"reach": [1],
+				"parry_flags": ["U"]
+			}
+		],
+		"ranged_attacks": [
+			{
+				"skill": "axe_mace",
+				"quality": 0,
+				"muscle": "no",
+				"damage_type": "pierce",
+				"damage_dice": 7,
+				"damage_mod": 0,
+				"accuracy": 5,
+				"effective_range": 1000,
+				"full_range": 4200,
+				"rate_of_fire": 1,
+				"shots": 5,
+				"load_time": 3,
+				"can_chamber": true,
+				"ammo_class": "rifle",
+				"ST_requirement": 10,
+				"bulk": 5,
+				"recoil": 4,
+				"hands": "always_two_hands"
+			}
+		],
+		"display": {
+			"character": 169,
+			"fg": [130, 90, 0]
+		}
+	},
+	"rifle cartridge": {
+		"attribute": {
+			"ST": 1,
+			"HT": 12
+		},
+		"trait": {
+			"stackable": true
+		},
+		"ammo": {
+			"rifle": {}
+		},
+		"display": {
+			"character": 175,
+			"fg": [200, 200, 0]
 		}
 	},
 	"sack": {},

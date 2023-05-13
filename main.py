@@ -13,7 +13,8 @@ import copy
 mat_dict = loader.load_materials()
 template_dict = loader.load_templates()
 Entity.DEFAULT_MAT = mat_dict["flesh"]
-tiles = loader.load_map(mat_dict, "map")
+feature_dict = loader.load_features(mat_dict)
+tiles = loader.load_map(mat_dict, feature_dict, "map")
 
 DEBUG = True
 
@@ -54,30 +55,19 @@ if DEBUG:
 	sack._contents[2].insert(magic_pebble)
 
 	soyjak = Actor.from_template("Soyjak", (29, 11), template_dict["human"])
+	gun = Entity.from_template("Rifle", (21, 15), template_dict["bolt action rifle"])
 
 	entities = EntityContainer()
 	#entities.add_entity(player, kobold, feloid, genie, crab, axe)
-	entities.add_entity(player, crab, axe, soyjak)
+	entities.add_entity(player, crab, axe, soyjak, gun)
 	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
-
-	# Test tile features
-	grass = TileFeature(-1, mat_dict["vegetation"], True, symbol = Glyph('"', fg = (0, 255, 0)))
-	for i in range(10, 30):
-		for e in range(3, 7):
-			tiles.contents[(i, e)].add_feature(copy.copy(grass))
-
-	bush = TileFeature(-1, mat_dict["vegetation"], True,
-		char_overwrite = True, symbol = Glyph('"', fg = (0, 255, 0)),
-		walkability = 1.5, visibility = 0.4)
-	for i in range(11, 14):
-		tiles.contents[(24, i)].add_feature(copy.copy(bush))
 
 	flow_glyph = UnstableGlyph(
 		('~', 247),
-		((255, 255, 255)),
-		((0, 0, 0))
+		((255, 255, 255),),
+		((0, 0, 0),)
 	)
-	fluid_flow = TileFeature(-1, None, char_overwrite = True, symbol = flow_glyph)
+	fluid_flow = TileFeature("Flowing liquid", -1, None, char_overwrite = True, symbol = flow_glyph)
 	for tile in tiles.contents:
 		if tiles.contents[tile].floor_material.state == State.LIQUID:
 			tiles.contents[tile].add_feature(copy.copy(fluid_flow))
@@ -184,18 +174,12 @@ def examine():
 	while key := poll().symbol:
 		if key in move_binds:
 			pointer.nudge(move_binds[key])
-			found_entities = entities.find_at((pointer.x, pointer.y))
+			target = (pointer.x, pointer.y)
+			found_entities = entities.find_at(target)
 			infobox.entries = [i.name for i in found_entities]
-			# TODO: Make tiles report their own info
-			targeted_tile = tiles.get_tile(pointer.x, pointer.y)
-			wall_desc_color = util.triplet_to_tag(targeted_tile.wall_material.fg) + \
-				util.triplet_to_tag(targeted_tile.wall_material.bg, True)
-			wall_entry = f"Wall: {wall_desc_color}{targeted_tile.wall_material.name}"
-			floor_desc_color = util.triplet_to_tag(targeted_tile.floor_material.fg) + \
-				util.triplet_to_tag(targeted_tile.floor_material.bg, True)
-			floor_entry = f"Floor: {floor_desc_color}{targeted_tile.floor_material.name}"
-			infobox.entries.append(wall_entry)
-			infobox.entries.append(floor_entry)
+			if target in player.seen:
+				targeted_tile = tiles.get_tile(*target)
+				infobox.entries += targeted_tile.build_descriptor()
 		elif key == 'escape':
 			break
 	UI.pop_widget()
@@ -213,7 +197,7 @@ def select_inventory_item():
 	inventory_items = player.build_contents_tree()
 	target = get_single_menu_selection("Drop what?", inventory_items)
 	if target is None: return None
-	return player._contents[target] # TODO: make this not rely on internal field
+	return player.contents[target]
 
 # Main loop
 
@@ -225,7 +209,12 @@ while event := poll():
 	key = event.symbol
 
 	if key == '`': # debug key, effect subject to change
-		print(player.root_part.__str__())
+		x = time.time()
+		for i in range(100):
+			update_UI()
+		y = time.time()
+		frame_time = (y - x) / 100
+		print("Average time per frame: " + str(frame_time))
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break

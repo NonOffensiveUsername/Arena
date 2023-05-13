@@ -1,0 +1,16 @@
+{
+	"Gravestone": {
+		"z_index": -1,
+		"material": "stone",
+		"fg_overwrite": true,
+		"char_overwrite": true,
+		"symbol": {"character": 241, "fg": [100, 100, 100]}
+	},
+	"Bush": {
+		"z_index": -1,
+		"material": "vegetation",
+		"fg_overwrite": true,
+		"char_overwrite": true,
+		"symbol": {"character": "\"", "fg": [0, 255, 0]}
+	}
+}

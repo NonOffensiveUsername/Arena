@@ -60,9 +60,12 @@ def is_diag(vec):
 def color_mul(color, m):
 	return (int(color[0] * m), int(color[1] * m), int(color[2] * m))
 
-def triplet_to_tag(tup, background = False):
-	out = "[" if not background else "[B"
-	out += f"{tup[0]},{tup[1]},{tup[2]}]"
+def build_tag(fg = None, bg = None):
+	out = ""
+	if fg:
+		out += f"[{fg[0]},{fg[1]},{fg[2]}]"
+	if bg:
+		out += f"[B{bg[0]},{bg[1]},{bg[2]}]"
 	return out
 
 # Takes two dictionaries and returns a recursively updated copy

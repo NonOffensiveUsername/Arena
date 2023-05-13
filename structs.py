@@ -46,6 +46,7 @@ class Skill(Enum):
 	AXE_MACE = "axe_mace"
 	AXE_MACE_2H = "axe_mace_2h"
 	BRAWLING = "brawling"
+	BROADSWORD = "broadsword"
 
 class Event:
 	# Volume is a logarithmic unit. An event with volume 0 can be heard automatically at a distance of 1 yard.

@@ -27,6 +27,7 @@ default_actor_attributes = {
 		}
 	],
 	"ranged_attacks": [],
+	"ammo": [],
 	"display": {
 		"character": 1,
 		"fg": [255, 255, 255],
@@ -120,7 +121,7 @@ class Actor(Entity):
 		return True
 
 	def drop(self, target):
-		self.remove(target)
+		target.container.remove(target)
 		self.delay += 10 # TODO: held items drop easier
 
 	def can_be_picked_up(self, picker):

@@ -79,6 +79,7 @@ default_entity_attributes = {
 	"use_cases": [],
 	"melee_attacks": [],
 	"ranged_attacks": [],
+	"ammo": [],
 	"display": {
 		"character": '*',
 		"fg": [255, 255, 255],
@@ -102,6 +103,8 @@ class Entity:
 		self.material = Entity.DEFAULT_MAT
 		self.traits = {}
 		self.melee_attacks = []
+		self.ranged_attacks = []
+		self.ammo = []
 		self.factions = []
 
 	@classmethod
@@ -121,6 +124,8 @@ class Entity:
 		e.traits = full_template["trait"]
 		e.factions = full_template["factions"]
 		e.melee_attacks = full_template["melee_attacks"]
+		e.ranged_attacks = full_template["ranged_attacks"]
+		e.ammo = full_template["ammo"]
 		e.calculate_secondaries()
 		e.hp = e.hp_max
 
@@ -159,6 +164,23 @@ class Entity:
 		e.melee_attacks = [improvised_attack]
 
 		return e
+
+	@property
+	def contents(self):
+		result = []
+		for thing in self._contents:
+			result.append(thing)
+			if x := thing.contents:
+				result += x
+		return result
+
+	@property
+	def global_position(self):
+		x = self
+		while x.position is None:
+			x = x.container
+		return x.position
+	
 
 	def construct_body(self, bodyplan):
 		if bodyplan == BodyType.HUMANOID:
@@ -309,7 +331,7 @@ class Entity:
 
 	def remove(self, target):
 		if target not in self._contents: return False
-		target.position = self.position
+		target.position = self.global_position
 		target.container = None
 		self._contents.remove(target)
 		for part in self.root_part.get_part_list():

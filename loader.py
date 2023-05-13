@@ -4,19 +4,29 @@ import tile
 from structs import *
 
 def load_materials():
-	mats_file = open("data/materials.json")
-	mats_raw = mats_file.read()
-	mats_file.close()
-	mats_obj = json.loads(mats_raw)
+	with open("data/materials.json") as mats_file:
+		mats_raw = json.load(mats_file)
 	
 	mats = {}
-	for material in mats_obj:
+	for material in mats_raw:
 		material["state"] = State(material["state"])
 		mats[material["name"]] = Material(**material)
 
 	return mats
 
-def load_map(materials, map_name):
+def load_features(materials):
+	with open("data/maps/tile_features.json") as features_file:
+		features = json.load(features_file)
+
+	for i in features:
+		features[i]["material"] = materials[features[i]["material"]]
+		features[i]["symbol"] = Glyph(**features[i]["symbol"])
+		features[i]["name"] = i
+		features[i] = tile.TileFeature(**features[i])
+
+	return features
+
+def load_map(materials, features, map_name):
 	with open(f"data/maps/{map_name}_defs.json") as defs_file:
 		tile_defs = json.load(defs_file)
 
@@ -29,17 +39,17 @@ def load_map(materials, map_name):
 
 	tiles = tile.TileContainer({}, width, height)
 	for z in range(0, len(map_raw)):
-		x = z % width
-		y = z // width
 		glyph = map_raw[z]
-		wall_mat_name = tile_defs[glyph]["wall_material"]
-		wall_mat = materials[wall_mat_name]
-		floor_mat_name = tile_defs[glyph]["floor_material"]
-		floor_mat = materials[floor_mat_name]
-		ceil_mat_name = tile_defs[glyph]["ceiling_material"]
-		ceil_mat = materials[ceil_mat_name]
-		new_tile = tile.Tile(wall_mat, floor_mat, ceil_mat)
-		tiles.set_tile(x, y, new_tile)
+		tile_template = tile_defs[glyph]
+		new_tile = tile.Tile(
+			materials[tile_template["wall_material"]],
+			materials[tile_template["floor_material"]],
+			materials[tile_template["ceiling_material"]]
+		)
+		if "features" in tile_template:
+			for feature in tile_template["features"]:
+				new_tile.add_feature(features[feature])
+		tiles.set_tile(z % width, z // width, new_tile)
 
 	return tiles
 
@@ -47,7 +57,6 @@ def load_templates():
 	result = {}
 	for filename in os.listdir('data/templates'):
 		path = 'data/templates/' + filename
-		print(f"Loading template file {path}")
 		with open(path) as file:
 			templates = json.load(file)
 

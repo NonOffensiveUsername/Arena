@@ -17,6 +17,13 @@ class Tile:
 		self._features.append(feature)
 		self._features.sort(key = lambda x: x.z_index)
 
+	def build_descriptor(self):
+		wall_tag = util.build_tag(self.wall_material.fg, self.wall_material.bg)
+		wall_entry = f"Wall: {wall_tag}{self.wall_material.name}"
+		floor_tag = util.build_tag(self.floor_material.fg, self.floor_material.bg)
+		floor_entry = f"Floor: {floor_tag}{self.floor_material.name}"
+		return [wall_entry, floor_entry] + [i.build_descriptor() for i in self._features]
+
 	# Movement point cost of moving through the tile
 	def traversal_cost(self, flyer = False):
 		cost = -1
@@ -55,8 +62,9 @@ class VoidTile(Tile):
 		return True
 
 class TileFeature:
-	def __init__(self, z_index, material = None, fg_overwrite = False, bg_overwrite = False,
-		char_overwrite = False, symbol = None, walkability = 1.0, visibility = 1, flags = ()):
+	def __init__(self, name, z_index, material = None, fg_overwrite = False, bg_overwrite = False,
+		char_overwrite = False, symbol = None, walkability = 1.0, visibility = 1.0, flags = ()):
+		self.name = name
 		self.z_index = z_index
 		self.material = material
 		self.fg_overwrite = fg_overwrite
@@ -66,6 +74,10 @@ class TileFeature:
 		self.walkability = walkability
 		self.visibility = visibility
 		self.flags = flags
+
+	def build_descriptor(self):
+		tag = util.build_tag(self.symbol.fg, self.symbol.bg)
+		return tag + self.name
 
 class TileContainer:
 	def __init__(self, contents, width, height):
