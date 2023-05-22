@@ -156,7 +156,7 @@ def get_single_menu_selection(title, options):
 	return result
 
 def pick_adjacent_entity(prompt):
-	neighbors = entities.get_neighbors(player)
+	neighbors = entities.get_within_radius(player)
 	names = [i.name for i in neighbors]
 	target = get_single_menu_selection(prompt, names)
 	if target is None: return None
@@ -179,7 +179,7 @@ def examine():
 		if key in move_binds:
 			pointer.nudge(move_binds[key])
 			target = (pointer.x, pointer.y)
-			found_entities = entities.find_at(target)
+			found_entities = entities.buckets[target]
 			infobox.entries = [i.name for i in found_entities]
 			if target in player.seen:
 				targeted_tile = tiles.get_tile(*target)
@@ -255,7 +255,7 @@ while event := poll():
 			shoutbox.add_shout("Cancelled")
 			continue
 		target = (player.position[0] + direction[0], player.position[1] + direction[1])
-		e = entities.find_at(target)
+		e = entities.buckets[target]
 		if not e:
 			shoutbox.add_shout("Whoosh!")
 			player.delay += 10

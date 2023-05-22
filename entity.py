@@ -4,6 +4,7 @@ import util
 from structs import *
 import dice
 from copy import deepcopy
+from collections import defaultdict
 
 class BodyPart:
 	def __init__(self, name, size = 0, hp_divisor = False, traits = []):
@@ -141,7 +142,7 @@ class Entity:
 	def __init__(self, name, position, is_player = False):
 		self.name = name
 		self._contents = []
-		self.position = position
+		self._position = position
 		self.container = None
 		self.delay = 0
 		self.is_player = is_player
@@ -221,6 +222,17 @@ class Entity:
 		return result
 
 	@property
+	def position(self):
+		return self._position
+
+	@position.setter
+	def position(self, new):
+		old = self._position
+		self._position = new
+		if self.observer:
+			self.observer.rebucket(self, old, new)
+
+	@property
 	def global_position(self):
 		x = self
 		while x.position is None:
@@ -295,7 +307,8 @@ class Entity:
 			self.observer.events.append(event)
 
 	def apply_delta(self, delta):
-		self.position = (self.position[0] + delta[0], self.position[1] + delta[1])
+		new = (self.position[0] + delta[0], self.position[1] + delta[1])
+		self.position = new
 
 	def move(self, game_state, direction):
 		if self.position is None: return False
@@ -395,13 +408,19 @@ class Entity:
 class EntityContainer:
 	def __init__(self):
 		self.contents = []
+		self.buckets = defaultdict(list)
 		self.events = []
 
 	def add_entity(self, *entities):
 		for e in entities:
 			self.contents.append(e)
 			e.observer = self
+			self.buckets[e.global_position].append(e)
 		self.sort_entities()
+
+	def rebucket(self, entity, old, new):
+		self.buckets[old].remove(entity)
+		self.buckets[new].append(entity)
 
 	def sort_entities(self):
 		self.contents = sorted(self.contents, key = lambda x: x.delay)
@@ -418,25 +437,15 @@ class EntityContainer:
 			self.contents[0].update(game_state)
 		self.sort_entities()
 
-	def find_at(self, position):
-		found = []
-		for e in self.contents:
-			if e.position == position: found.append(e)
-		return found
-
-	def find_in(self, positions):
-		found = []
-		for e in self.contents:
-			if e.position in positions: found.append(e)
-		return found
-
-	def get_neighbors(self, e, exclude_self = True):
-		targets = []
-		for direction in util.MOORE_NEIGHBORHOOD_INCLUSIVE:
-			targets.append(util.tup_add(e.position, direction))
-		neighbors = self.find_in(targets)
-		if exclude_self and e in neighbors: neighbors.remove(e)
-		return neighbors
+	def get_within_radius(self, e, radius = 1, exclude_self = True):
+		ex, ey = e.global_position
+		discovered = []
+		for x in range(ex - radius, ex + radius + 1):
+			for y in range(ey - radius, ey + radius + 1):
+				discovered += self.buckets[(x, y)]
+		if exclude_self and e in discovered:
+			discovered.remove(e)
+		return discovered
 
 	def pop_events(self):
 		e = self.events.copy()
