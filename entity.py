@@ -126,7 +126,6 @@ class Entity:
 		e.melee_attacks = full_template["melee_attacks"]
 		e.ranged_attacks = full_template["ranged_attacks"]
 		e.ammo = full_template["ammo"]
-		e.calculate_secondaries()
 		e.hp = e.hp_max
 
 		return e
@@ -181,6 +180,9 @@ class Entity:
 			x = x.container
 		return x.position
 	
+	@property
+	def hp_max(self):
+		return self.ST * self.material.density + self.traits.get("hp_boost", 0)
 
 	def construct_body(self, bodyplan):
 		if bodyplan == BodyType.HUMANOID:
@@ -227,9 +229,6 @@ class Entity:
 			self.root_part = root
 		else:
 			self.root_part = BodyPart("Mass", 0, traits = [PartFlag.SIMPLE])
-
-	def calculate_secondaries(self): # This is poopy get rid of it
-		self.hp_max = int(self.ST * self.material.density)
 
 	def sever(self, part):
 		new_entity = Entity.from_part(part, self)

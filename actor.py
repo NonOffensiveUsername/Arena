@@ -41,11 +41,9 @@ class Actor(Entity):
 	def __init__(self, name, position, is_player = False):
 		super().__init__(name, position, is_player)
 
-	def calculate_secondaries(self):
-		super().calculate_secondaries()
-		self.speed = (self.DX + self.HT) / 4
-		if "speed_boost" in self.traits:
-			self.speed += self.traits["speed_boost"]
+	@property
+	def speed(self):
+		return (self.DX + self.HT) / 4 + self.traits.get("speed_boost", 0)
 
 	def get_held_entities(self):
 		result = []
