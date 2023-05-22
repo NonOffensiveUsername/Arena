@@ -87,6 +87,53 @@ default_entity_attributes = {
 	}
 }
 
+# List of Entity Attributes:
+#  name           - Display name for use in the interface. Not unique or an
+#                   identifier.
+#  _contents      - Entities that move with the entity because they are on, in,
+#                   or held by the entity. Internal use only.
+# contents        - Property for accessing an entity's contents. Searches
+#                   recursively so that contents of contents are returned as
+#                   well.
+# position        - (x, y) tuple representing the physical location of the
+#                   entity. If the entity is contained in another this is None.
+# global_position - (x, y) tuple representing the physical location of the
+#                   entity, even if the entity is contained within another.
+#                   Property, cannot be set. Change the position or the
+#                   position of the container instead.
+# container       - The entity this entity is contained by, or None if the
+#                   entity is independent. This is the physical container
+#                   in the game world, not the EntityContainer object which
+#                   manages the entity.
+# delay           - The number of ticks until the entity's update() method is
+#                   called.
+# is_player       - Self explanatory.
+# pronoun         - The pronoun used when constructing messages about the
+#                   entity for display.
+# observer        - The EntityContainer object which manages the entity. Used
+#                   to alert the EntityContainer about events and spawn new
+#                   entities.
+# material        - The material the entity is physically composed of. Used to
+#                   calculate hitpoints and damage reduction.
+# traits          - Dictionary of traits the entity possesses. Keys are strings
+#                   representing different traits and values vary depending on
+#                   the trait. Traits with different degrees might be numbers
+#                   while an on or off trait could be binary.
+# melee_attacks   - List of dictionaries which can be used by the entity as
+#                   attack templates.
+# ranged_attacks  - Same as above for ranged attacks.
+# ammo            - List of ways the entity can be used as ammunition.
+# factions        - List of tags used by AI to react to things.
+# hp_max          - Self explanatory. Property, cannot be set as it is derived
+#                   from other attributes.
+# hp              - Hitpoints. Remaining physical durability.
+# size            - Physical size of the entity in the game world. 0 is human
+#                   sized while every +/- 1 is VERY roughly 50% bigger/smaller.
+# ST              - Physical mass, directly translating to maximum HP. 10 is
+#                   the human average.
+# HT              - Resistance to breakdown when the entity loses HP or is
+#                   otherwise put under stress. 10 is average.
+
 class Entity:
 	DEFAULT_MAT = None
 	DEFAULT_TEMPLATE = default_entity_attributes
