@@ -54,6 +54,9 @@ def rand_dir():
 def tup_add(a, b):
 	return (a[0] + b[0], a[1] + b[1])
 
+def tup_sub(a, b):
+	return (a[0] - b[0], a[1] - b[1])
+
 def is_diag(vec):
 	return vec[0] != 0 and vec[1] != 0
 

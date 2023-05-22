@@ -40,6 +40,7 @@ class Actor(Entity):
 
 	def __init__(self, name, position, is_player = False):
 		super().__init__(name, position, is_player)
+		self.dead = False
 
 	@property
 	def speed(self):
@@ -128,6 +129,13 @@ class Actor(Entity):
 			return False
 		return picker.ST > self.ST
 
+	def path_towards(self, game_state, target, goal_distance):
+		distance = util.manhattan_dist(self.position, target.position)
+		if distance <= goal_distance:
+			return None
+		next_square = game_state.next_step_towards(self.position, target.position)
+		return util.tup_sub(next_square, self.position)
+
 class RandomWalker(Actor):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -147,13 +155,11 @@ class Chaser(Actor):
 		if self.hp <= 0 or self.position is None:
 			self.delay = 1000
 			return
-		dist_from_target = util.manhattan_dist(self.position, self.target.position)
-		if dist_from_target > 1:
-			next_square = game_state.next_step_towards(self.position, self.target.position)
-			direction = (next_square[0] - self.position[0], next_square[1] - self.position[1])
+		direction = self.path_towards(game_state, self.target, 1)
+		if direction is not None:
 			self.move(game_state, direction)
-		else:
-			self.send_attack(self.target)
+			return
+		self.send_attack(self.target)
 
 class TetheredWanderer(Actor):
 	def __init__(self, *args, **kwargs):
@@ -172,4 +178,28 @@ class TetheredWanderer(Actor):
 			return
 		if random.randint(0, 9) < 2:
 			self.target_position = random.choice(self.tether)
+		self.delay = 10
+
+class Monster(Actor):
+	def update(self, game_state):
+		if self.dead:
+			self.delay = 100
+			return
+		local_entities = self.observer.contents
+		visible_entities = list(filter(lambda x: game_state.visibility_between(self.position, x.global_position), local_entities))
+		visible_entities.sort(key = lambda x: util.manhattan_dist(self.position, x.global_position))
+		target = None
+		for entity in visible_entities:
+			if type(entity) == Actor and "monster" not in entity.factions:
+				target = entity
+				break
+		if target is None:
+			self.delay = 10
+			return
+		if (direction := self.path_towards(game_state, target, 1)) is not None:
+			self.move(game_state, direction)
+			return
+		if random.randint(0, 9) < 2:
+			self.move(game_state, random.choice(util.MOORE_NEIGHBORHOOD))
+			return
 		self.delay = 10

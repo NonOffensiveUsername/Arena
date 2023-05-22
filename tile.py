@@ -109,6 +109,13 @@ class TileContainer:
 				visible_tiles.add(point)
 				visibility *= 1 - self.opacity_grid.get(point, 0.0)
 		return visible_tiles
+
+	def visibility_between(self, a, b):
+		line = util.bresenham_line(*a, *b)
+		visibility = 1.0
+		for point in line:
+			visibility *= 1 - self.opacity_grid.get(point, 1.0)
+		return visibility
  
 	def get_neighbors(self, x, y):
 		neighbors = []

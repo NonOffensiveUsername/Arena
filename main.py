@@ -61,6 +61,11 @@ if DEBUG:
 	#entities.add_entity(player, kobold, feloid, genie, crab, axe)
 	entities.add_entity(player, crab, axe, soyjak, gun)
 	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
+
+	zombies = [Monster.from_template("Zombie", (55, 11 + x), template_dict["human"], template_dict["zombie"]) for x in range(4)]
+	entities.add_entity(*zombies)
+
+	# Adding flow features to water tiles... maybe just inherently randomize fluid rendering?
 	flow_glyph = UnstableGlyph(
 		('~', 247),
 		((255, 255, 255),),
