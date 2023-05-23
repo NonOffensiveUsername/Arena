@@ -193,6 +193,10 @@ class Monster(Actor):
 			if type(entity) == Actor and "monster" not in entity.factions:
 				target = entity
 				break
+		if target is not None:
+			self.display_tile.fg = (255, 0, 0)
+		else:
+			self.display_tile.fg = (0, 255, 0)
 		if target is None:
 			self.delay = 10
 			return
