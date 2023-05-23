@@ -1,3 +1,4 @@
+from functools import cache
 from structs import *
 import tilemappings
 import util
@@ -90,8 +91,9 @@ class TileContainer:
 	def construct_opacity_grid(self):
 		self.opacity_grid = self.map(tilemappings.opacity)
 
+	@cache
 	def visible_from(self, position):
-		visible_tiles = set()
+		visible_tiles = {}
 		targets = []
 		# Cast rays from origin to each tile on the outer edge
 		# ensuring all tiles are hit at least once
@@ -106,16 +108,14 @@ class TileContainer:
 			visibility = 1.0
 			for point in line:
 				if visibility < .1: break
-				visible_tiles.add(point)
+				visible_tiles[point] = visibility
 				visibility *= 1 - self.opacity_grid.get(point, 0.0)
 		return visible_tiles
 
 	def visibility_between(self, a, b):
-		line = util.build_line(*a, *b)
-		visibility = 1.0
-		for point in line:
-			visibility *= 1 - self.opacity_grid.get(point, 1.0)
-		return visibility
+		return max(
+			self.visible_from(a).get(b, 0),
+			self.visible_from(b).get(a, 0))
  
 	def get_neighbors(self, x, y):
 		neighbors = []

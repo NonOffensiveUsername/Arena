@@ -186,7 +186,9 @@ class Monster(Actor):
 			self.delay = 100
 			return
 		local_entities = self.observer.contents
-		visible_entities = list(filter(lambda x: game_state.visibility_between(self.position, x.global_position), local_entities))
+		visible_entities = list(filter(
+			lambda x: game_state.visibility_between(self.position, x.global_position) > 0,
+			local_entities))
 		visible_entities.sort(key = lambda x: util.manhattan_dist(self.position, x.global_position))
 		target = None
 		for entity in visible_entities:
