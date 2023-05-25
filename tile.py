@@ -55,6 +55,7 @@ class VoidTile(Tile):
 		self.wall_material = VoidTile.VOID
 		self.floor_material = VoidTile.VOID
 		self.ceiling_material = VoidTile.VOID
+		self._features = []
 
 	def traversal_cost(self):
 		return -1

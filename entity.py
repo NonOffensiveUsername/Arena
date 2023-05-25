@@ -422,6 +422,8 @@ class EntityContainer:
 			self.buckets[e.global_position].append(e)
 		self.sort_entities()
 
+	# TODO: Make insertions keep entities sorted by size
+	# TODO: Make sort preserving insertion utility function
 	def rebucket(self, entity, old, new):
 		self.buckets[old].remove(entity)
 		self.buckets[new].append(entity)
@@ -439,7 +441,7 @@ class EntityContainer:
 			entity.delay -= 1
 		while self.contents[0].delay <= 0 and self.contents[0].is_player == False:
 			self.contents[0].update(game_state)
-		self.sort_entities()
+			self.sort_entities()
 
 	def get_within_radius(self, e, radius = 1, exclude_self = True):
 		ex, ey = e.global_position
@@ -456,9 +458,9 @@ class EntityContainer:
 		self.events = []
 		return e
 
-	def build_grid(self, visible):
+	def build_grid(self, visible = None):
 		grid = {}
 		for e in sorted(self.contents, key = lambda x: x.size):
-			if e.position in visible:
+			if visible is None or e.position in visible:
 				grid[e.position] = e.display_tile
 		return grid

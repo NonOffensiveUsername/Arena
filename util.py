@@ -57,6 +57,9 @@ def tup_add(a, b):
 def tup_sub(a, b):
 	return (a[0] - b[0], a[1] - b[1])
 
+def tup_mul(a, b):
+	return (a[0] * b[0], a[1] * b[1])
+
 def is_diag(vec):
 	return vec[0] != 0 and vec[1] != 0
 

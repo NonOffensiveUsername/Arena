@@ -23,6 +23,7 @@ class KeyEvent:
 	CODES_TO_SYMS = {
 		27: "escape",
 		13: "enter",
+		32: "space",
 		79: "right",
 		80: "left",
 		81: "down",

@@ -1,5 +1,4 @@
 from enum import Enum
-#from dataclasses import dataclass
 import re
 import util
 import random

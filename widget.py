@@ -111,3 +111,12 @@ class Pointer(Widget):
 	def draw(self):
 		self.buffer.clear()
 		self.buffer[(self.x, self.y)] = Glyph(' ', bg=(255, 0, 0))
+
+class Label(Widget):
+	def __init__(self, x, y, text):
+		self.text = text
+		super().__init__(x, y, 100, 1)
+
+	def draw(self):
+		self.buffer.clear()
+		self.print(self.text, 0, 0)
