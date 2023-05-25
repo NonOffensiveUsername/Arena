@@ -16,6 +16,11 @@ class Mood(Enum):
 	EXCITED = 2
 	BASHFUL = 3
 
+class Awareness(Enum):
+	ALERT = "alert"
+	SLEEP = "sleep"
+	UNCONSCIOUS = "unconscious"
+
 class DamageType(Enum):
 	BASH = "bash"
 	CUT = "cut"

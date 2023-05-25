@@ -180,7 +180,7 @@ def examine():
 			pointer.nudge(move_binds[key])
 			target = (pointer.x, pointer.y)
 			found_entities = entities.buckets[target]
-			infobox.entries = [i.name for i in found_entities]
+			infobox.entries = [f"{i.name} [r]{i.hp}/{i.hp_max}" for i in found_entities]
 			if target in player.seen:
 				targeted_tile = tiles.get_tile(*target)
 				infobox.entries += targeted_tile.build_descriptor()

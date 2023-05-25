@@ -134,6 +134,8 @@ default_entity_attributes = {
 #                   the human average.
 # HT              - Resistance to breakdown when the entity loses HP or is
 #                   otherwise put under stress. 10 is average.
+# dead            - Entity is deceased or otherwise completely nonfunctional
+# death_checks    - How many HT rolls the entity has made to avoid death.
 
 class Entity:
 	DEFAULT_MAT = None
@@ -154,6 +156,8 @@ class Entity:
 		self.ranged_attacks = []
 		self.ammo = []
 		self.factions = []
+		self.dead = False
+		self.death_checks = 0
 
 	@classmethod
 	def from_template(cls, name, position, *templates, is_player = False):

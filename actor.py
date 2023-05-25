@@ -40,7 +40,7 @@ class Actor(Entity):
 
 	def __init__(self, name, position, is_player = False):
 		super().__init__(name, position, is_player)
-		self.dead = False
+		self.awareness = Awareness.ALERT
 
 	@property
 	def speed(self):
@@ -80,18 +80,21 @@ class Actor(Entity):
 		self.delay = 10
 
 	def receive_attack(self, attacker, attack):
-		if dice.roll() <= 9:
+		if self.dodge():
 			attack_descriptor = f"{attacker.name} attacks the {self.name}, but {self.pronoun} dodges!"
 			self.raise_event(Event(visual = attack_descriptor))
 			return
 		super().receive_attack(attacker, attack)
 
-		if self.hp > 0:
-			return
-
-		self.display_tile.fg = (150, 150, 150)
-		self.display_tile.bg = (200, 0, 0)
-		self.raise_event(Event(visual = f"[m]The {self.name} is struck down."))
+		while self.hp <= self.hp_max * self.death_checks * -1:
+			self.death_checks += 1
+			if dice.roll() > self.HT:
+				self.dead = True
+				self.display_tile.fg = (150, 150, 150)
+				self.display_tile.bg = (200, 0, 0)
+				self.raise_event(Event(visual = f"[m]The {self.name} is struck down."))
+				return
+			self.raise_event(Event(visual = f"The {self.name} manages to evade death!"))
 
 	def dodge(self):
 		dodge_target = int(self.speed) + 3
@@ -195,17 +198,13 @@ class Monster(Actor):
 			if type(entity) == Actor and "monster" not in entity.factions:
 				target = entity
 				break
-		if target is not None:
-			self.display_tile.fg = (255, 0, 0)
-		else:
-			self.display_tile.fg = (0, 255, 0)
 		if target is None:
 			self.delay = 10
+			if random.randint(0, 9) < 2:
+				self.move(game_state, random.choice(util.MOORE_NEIGHBORHOOD))
 			return
 		if (direction := self.path_towards(game_state, target, 1)) is not None:
 			self.move(game_state, direction)
 			return
-		if random.randint(0, 9) < 2:
-			self.move(game_state, random.choice(util.MOORE_NEIGHBORHOOD))
-			return
+		
 		self.delay = 10
