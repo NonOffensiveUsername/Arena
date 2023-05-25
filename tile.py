@@ -104,11 +104,11 @@ class TileContainer:
 			targets.append((0, i))
 			targets.append((self.width, i))
 		for t in targets:
-			line = util.build_line(*position, *t)
+			line = util.bresenham_line(*position, *t)
 			visibility = 1.0
 			for point in line:
 				if visibility < .1: break
-				visible_tiles[point] = visibility
+				visible_tiles[point] = max(visible_tiles.get(point, 0), visibility)
 				visibility *= 1 - self.opacity_grid.get(point, 0.0)
 		return visible_tiles
 

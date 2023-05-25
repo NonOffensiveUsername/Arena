@@ -7,28 +7,30 @@ MOORE_NEIGHBORHOOD_INCLUSIVE = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0,
 NEUMANN_NEIGHBORHOOD = ((-1, 0), (0, -1), (0, 1), (1, 0))
 NEUMANN_NEIGHBORHOOD_INCLUSIVE = ((-1, 0), (0, -1), (0, 0), (0, 1), (1, 0))
 
-def build_line(x0, y0, x1, y1): # 0 5 5 0
-	if x0 == x1:
-		if y0 < y1:
-			return [(x0, y) for y in range(y0, y1 + 1)]
-		return list(reversed([(x0, y) for y in range(y1, y0 + 1)]))
-
-	swap = False
-	if x1 < x0:
-		swap = True
-		x0, y0, x1, y1 = x1, y1, x0, y0
-
+def bresenham_line(x0, y0, x1, y1):
 	dx = abs(x1 - x0)
-	dy = y1 - y0
+	dy = abs(y1 - y0)
+
+	if steep := dy > dx:
+		dx, dy = dy, dx
+		x0, y0 = y0, x0
+		x1, y1 = y1, x1
+
+	x, y = x0, y0
+	err = 2 * dy - dx
+	x_sign = 1 if x0 < x1 else -1
+	y_sign = 1 if y0 < y1 else -1
 
 	points = []
+	for i in range(dx + 1):
+		points.append((y, x) if steep else (x, y))
+		if err > 0:
+			y += y_sign
+			err += 2 * (dy - dx)
+		else:
+			err += 2 * dy
 
-	for x in range(x0, x1 + 1):
-		y = round(y0 + dy * (x - x0) / dx)
-		points.append((x, y))
-
-	if swap:
-		points.reverse()
+		x += x_sign
 
 	return points
 
