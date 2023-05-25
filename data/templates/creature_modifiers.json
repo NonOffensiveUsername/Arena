@@ -3,6 +3,7 @@
 		"factions": ["monster"],
 		"trait": {
 			"injury_tolerance": "undead",
+			"shambler": 3,
 			"brainless": true,
 			"DX_increase": -2,
 			"IQ_increase": -5,

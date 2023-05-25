@@ -321,6 +321,8 @@ class Entity:
 		cost = target_tile.traversal_cost() * (1 + util.is_diag(direction) * 0.4)
 		if traversible := cost >= 0:
 			self.apply_delta(direction)
+			if "shambler" in self.traits:
+				cost *= (1 + random.random() * self.traits["shambler"])
 			self.delay = cost / self.speed
 		else:
 			self.delay = 10

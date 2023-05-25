@@ -9,6 +9,8 @@ import util
 import loader
 import time
 import copy
+import random
+from collections import deque
 
 mat_dict = loader.load_materials()
 template_dict = loader.load_templates()
@@ -62,6 +64,13 @@ UI.register(shoutbox)
 status_box = widget.ListBox(60, 0, 39, 24, "Status:")
 UI.register(status_box)
 
+# TODO: Clean up fps tracking code
+# srsly this is a mess
+fps_label = widget.Label(0, 0, "")
+UI.register(fps_label)
+last_frame_time = 0
+last_frame_times = deque([0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 10)
+
 # Keys associated with movement directions
 move_binds = {
 	'h': (-1,  0),
@@ -76,15 +85,27 @@ move_binds = {
 
 def update_UI():
 	intermediate_grid = tiles.map(tilemappings.visual_map_func)
+	UI.base = intermediate_grid
+	secondary_grid = entities.build_grid()
 	for e in entities.pop_events():
 		shoutbox.add_shout(e.primary)
-	UI.base = intermediate_grid
-	UI.entity_layer = entities.build_grid()
+		if e.glyph is not None and e.position is not None:
+			secondary_grid[e.position] = e.glyph
+	UI.entity_layer = secondary_grid
 	status_entries = [
 		f"Name: God",
 		f"HP: [r]\xEC/\xEC"
 	]
 	status_box.entries = status_entries
+	# More messy fps tracking
+	now_time = time.time()
+	global last_frame_time
+	cur_fps = 1 / (now_time - last_frame_time)
+	last_frame_times.append(cur_fps)
+	average_fps = int(sum(last_frame_times) / 10)
+	fps_label.text = "[c]" + str(average_fps)
+	last_frame_time = now_time
+	# /mess
 	UI.draw()
 
 TICK_RATE = 1/100
@@ -147,6 +168,14 @@ while event := idle():
 	sym = event.symbol
 	if sym == 'p':
 		break
+	elif sym == '`':
+		target = None
+		while True:
+			target = (random.randrange(60), random.randrange(20))
+			if tiles.get_tile(*target).traversal_cost() >= 0:
+				break
+		z = Monster.from_template("Zombie", target, template_dict["human"], template_dict["zombie"])
+		entities.add_entity(z)
 	elif sym == 'space':
 		pause_label = widget.Label(0, 0, "[g][B100,100,100]Paused")
 		UI.register(pause_label)
