@@ -1,7 +1,9 @@
 import random
+import math
 from structs import *
 from entity import Entity
 import dice
+import util
 
 default_actor_attributes = {
 	"attribute": {
@@ -41,6 +43,10 @@ class Actor(Entity):
 	def __init__(self, name, position, is_player = False):
 		super().__init__(name, position, is_player)
 		self.awareness = Awareness.ALERT
+		self.aim_target = None
+		self.aim_turns = 0
+		self.skills = {'rifle': 10}
+		self.goal = None
 
 	@property
 	def speed(self):
@@ -53,6 +59,14 @@ class Actor(Entity):
 			if hand.held:
 				result.append([hand, hand.held])
 		return result
+
+	def search_for_entities(self, game_state):
+		local_entities = self.observer.contents
+		visible_entities = list(filter(
+			lambda x: game_state.visibility_between(self.position, x.global_position) > 0,
+			local_entities))
+		visible_entities.sort(key = lambda x: util.manhattan_dist(self.position, x.global_position))
+		return visible_entities
 
 	def send_attack(self, target, target_part = None):
 		# This all sucks, attack should be selected outside this function
@@ -75,9 +89,34 @@ class Actor(Entity):
 		damage_mod = (effective_ST - 3) % 8 // 2 - 1 if effective_ST >= 11 else (effective_ST + 1) // 2 - 7
 		power = dice.roll(damage_dice, mod = damage_mod)
 		damage_type = attack_template["damage_type"]
-		attack = Attack(power, damage_type, acc, target = target_part)
+		attack = Attack(power, damage_type, target = target_part)
 		target.receive_attack(self, attack)
 		self.delay = 10
+
+	def shoot(self, attack_template, target, target_part = None):
+		effective_skill = self.skills[attack_template['skill']]
+		effective_skill += target.size
+		if target_part:
+			effective_skill += target_part.size
+		distance = util.true_distance(self.position, target.position)
+		if distance > 0:
+			dist_mod = max(int(math.log(distance / 2, 1.5)), 0)
+			effective_skill += dist_mod
+		else:
+			effective_skill -= attack_template['bulk']
+		if self.aim_target is target:
+			effective_skill += (attack_template['accuracy'] * (self.aim_turns > 0)) + max(0, self.aim_turns - 1)
+		# effective_skill += <light level>
+		roll = dice.roll()
+		self.raise_event(Event(sound = "Bang!", visual_priority = False))
+		vector = util.tup_normalize(util.tup_sub(target.position, self.position))
+		effect_position = util.tup_add(self.position, vector)
+		self.spawn_effect(Effect(effect_position, ['\xB1', '\xB2'], (255, 255, 0), 2))
+		if roll > effective_skill:
+			return # TODO: Accidental targets / collateral damage
+		attack = Attack.from_template(attack_template, target_part)
+		target.receive_attack(self, attack)
+		self.delay += 10
 
 	def receive_attack(self, attacker, attack):
 		if self.dodge():
@@ -95,6 +134,11 @@ class Actor(Entity):
 				self.raise_event(Event(visual = f"[m]The {self.name} is struck down."))
 				return
 			self.raise_event(Event(visual = f"The {self.name} manages to evade death!"))
+
+	def wait(self):
+		if self.aim_target is not None:
+			self.aim_turns += 1
+		self.delay += 10
 
 	def dodge(self):
 		dodge_target = int(self.speed) + 3
@@ -185,26 +229,43 @@ class TetheredWanderer(Actor):
 
 class Monster(Actor):
 	def update(self, game_state):
-		if self.dead:
+		if self.dead or self.awareness != Awareness.ALERT:
 			self.delay = 100
 			return
-		local_entities = self.observer.contents
-		visible_entities = list(filter(
-			lambda x: game_state.visibility_between(self.position, x.global_position) > 0,
-			local_entities))
-		visible_entities.sort(key = lambda x: util.manhattan_dist(self.position, x.global_position))
-		target = None
-		for entity in visible_entities:
-			if type(entity) == Actor and "monster" not in entity.factions:
-				target = entity
-				break
-		if target is None:
+		if self.goal is None:
+			visible_entities = self.search_for_entities(game_state)
+			for entity in visible_entities:
+				if type(entity) != Entity and "monster" not in entity.factions:
+					self.goal = entity
+					break
+		if self.goal is None:
 			self.delay = 10
 			if random.randint(0, 9) < 2:
 				self.move(game_state, random.choice(util.MOORE_NEIGHBORHOOD))
 			return
-		if (direction := self.path_towards(game_state, target, 1)) is not None:
+		if (direction := self.path_towards(game_state, self.goal, 1)) is not None:
 			self.move(game_state, direction)
 			return
 		
 		self.delay = 10
+
+class Soldier(Actor):
+	def update(self, game_state):
+		if self.goal and self.goal.dead:
+			self.goal = None
+		if self.dead or self.awareness != Awareness.ALERT:
+			self.delay = 100
+			return
+		visible_entities = self.search_for_entities(game_state)
+		for entity in visible_entities:
+			if type(entity) != Entity and "monster" in entity.factions and not entity.dead:
+				self.goal = entity
+				break
+		if self.goal is None:
+			self.delay = 10
+			if random.randint(0, 9) < 1:
+				self.move(game_state, random.choice(util.MOORE_NEIGHBORHOOD))
+			return
+		weapon = self.get_held_entities()[0][1]
+		attack_template = weapon.ranged_attacks[0]
+		self.shoot(attack_template, self.goal)

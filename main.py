@@ -103,7 +103,7 @@ def update_UI():
 	for e in entities.pop_events():
 		shoutbox.add_shout(e.primary)
 	UI.base = intermediate_grid
-	UI.entity_layer = entities.build_grid(player.currently_seen)
+	UI.entity_layer = entities.build_grid_with_visibility(player.currently_seen)
 	status_entries = [
 		f"Name: {player.name}",
 		f"HP: [r]{player.hp}/{player.hp_max}"

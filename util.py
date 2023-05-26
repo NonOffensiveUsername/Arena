@@ -37,6 +37,9 @@ def bresenham_line(x0, y0, x1, y1):
 def manhattan_dist(a, b):
 	return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
 
+def true_distance(a, b):
+	return math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
+
 def dir_between(a, b):
 	if type(a) == tuple and type(b) == tuple:
 		x = a[0] - b[0]
@@ -59,6 +62,23 @@ def tup_sub(a, b):
 
 def tup_mul(a, b):
 	return (a[0] * b[0], a[1] * b[1])
+
+normalization_table = {
+	0: (-1,  0),
+	1: (-1, -1),
+	2: ( 0, -1),
+	3: ( 1, -1),
+	4: ( 1,  0),
+	5: ( 1,  1),
+	6: ( 0,  1),
+	7: (-1,  1),
+	8: (-1,  0),
+}
+
+def tup_normalize(vec):
+	angle = math.atan2(vec[1], vec[0]) + (math.pi / 8)
+	sector = int((angle + math.pi) / (2 * math.pi) * 8)
+	return normalization_table[sector]
 
 def is_diag(vec):
 	return vec[0] != 0 and vec[1] != 0

@@ -44,7 +44,7 @@
 		],
 		"ranged_attacks": [
 			{
-				"skill": "axe_mace",
+				"skill": "rifle",
 				"quality": 0,
 				"muscle": "no",
 				"damage_type": "pierce",

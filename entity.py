@@ -310,6 +310,10 @@ class Entity:
 		if self.observer:
 			self.observer.events.append(event)
 
+	def spawn_effect(self, effect):
+		if self.observer:
+			self.observer.effects.append(effect)
+
 	def apply_delta(self, delta):
 		new = (self.position[0] + delta[0], self.position[1] + delta[1])
 		self.position = new
@@ -416,6 +420,7 @@ class EntityContainer:
 		self.contents = []
 		self.buckets = defaultdict(list)
 		self.events = []
+		self.effects = []
 
 	def add_entity(self, *entities):
 		for e in entities:
@@ -444,6 +449,13 @@ class EntityContainer:
 		while self.contents[0].delay <= 0 and self.contents[0].is_player == False:
 			self.contents[0].update(game_state)
 			self.sort_entities()
+		expired = []
+		for effect in self.effects:
+			effect.age += 1
+			if effect.age > effect.duration:
+				expired.append(effect)
+		for effect in expired:
+			self.effects.remove(effect)
 
 	def get_within_radius(self, e, radius = 1, exclude_self = True):
 		ex, ey = e.global_position
@@ -460,9 +472,20 @@ class EntityContainer:
 		self.events = []
 		return e
 
-	def build_grid(self, visible = None):
+	def build_grid(self):
 		grid = {}
 		for e in sorted(self.contents, key = lambda x: x.size):
-			if visible is None or e.position in visible:
+			if e.position is not None:
 				grid[e.position] = e.display_tile
+		for e in self.effects:
+			grid[e.position] = e.sample()
+		return grid
+
+	def build_grid_with_visibility(self, visible):
+		grid = {}
+		for e in sorted(self.contents, key = lambda x: x.size):
+			if e.position in visible:
+				grid[e.position] = e.display_tile
+		for e in self.effects:
+			grid[e.position] = e.sample()
 		return grid

@@ -22,23 +22,15 @@ DEBUG = True
 
 if DEBUG:
 	# Test entities
-	crab = TetheredWanderer.from_template("Crab", (49, 10), template_dict["crab"])
-	crab.tether = (
-		(49, 10),
-		(49, 11),
-		(49, 12),
-		(49, 13),
-		(50, 10),
-		(50, 11),
-		(50, 12),
-		(50, 13),
-	)
-
-	soyjak = Actor.from_template("Soyjak", (29, 11), template_dict["human"])
-	gun = Entity.from_template("Rifle", (21, 15), template_dict["bolt action rifle"])
 
 	entities = EntityContainer()
-	entities.add_entity(crab, soyjak, gun)
+
+	for i in range(4):
+		soldier = Soldier.from_template("Soldier", (36, 11 + i), template_dict["human"])
+		gun = Entity.from_template("Rifle", None, template_dict["bolt action rifle"])
+		soldier.get(gun)
+		entities.add_entity(soldier, gun)
+		soldier.delay = i * 3
 
 	zombies = [Monster.from_template(f"Zombie {x}", (55, 11 + x), template_dict["human"], template_dict["zombie"]) for x in range(4)]
 	entities.add_entity(*zombies)
@@ -89,8 +81,6 @@ def update_UI():
 	secondary_grid = entities.build_grid()
 	for e in entities.pop_events():
 		shoutbox.add_shout(e.primary)
-		if e.glyph is not None and e.position is not None:
-			secondary_grid[e.position] = e.glyph
 	UI.entity_layer = secondary_grid
 	status_entries = [
 		f"Name: God",
@@ -108,7 +98,7 @@ def update_UI():
 	# /mess
 	UI.draw()
 
-TICK_RATE = 1/100
+TICK_RATE = 1/30
 TICKS_PER_FRAME = 1
 def idle():
 	cur_time = None
@@ -182,6 +172,8 @@ while event := idle():
 		while key := poll():
 			if key.symbol == 'space':
 				break
+			if key.symbol == '.':
+				entities.tick(tiles)
 		UI.pop_widget()
 	elif sym == 'x':
 		examine()

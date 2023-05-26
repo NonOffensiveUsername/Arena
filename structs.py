@@ -2,6 +2,7 @@ from enum import Enum
 import re
 import util
 import random
+import dice
 
 class State(Enum):
 	SOLID = "solid"
@@ -51,6 +52,7 @@ class Skill(Enum):
 	AXE_MACE_2H = "axe_mace_2h"
 	BRAWLING = "brawling"
 	BROADSWORD = "broadsword"
+	RIFLE = "rifle"
 
 class Event:
 	# Volume is a logarithmic unit. An event with volume 0 can be heard automatically at a distance of 1 yard.
@@ -70,14 +72,31 @@ class Event:
 		char = "!" # TODO: change character based on volume
 		return Glyph(char, (255, 255, 0))
 
+class Effect:
+	def __init__(self, position, characters, color, duration):
+		self.position = position
+		self.characters = characters
+		self.color = color
+		self.duration = duration
+		self.age = 0
+
+	def sample(self):
+		character = self.characters[self.age % len(self.characters)]
+		return Glyph(character, self.color)
+
 class Attack:
-	def __init__(self, power, damage_type, accuracy, target = None, weapon = None, flags = ()):
+	def __init__(self, power, damage_type, target = None, weapon = None, flags = ()):
 		self.power = power
 		self.damage_type = damage_type
-		self.accuracy = accuracy
 		self.target = target
 		self.weapon = weapon
 		self.flags = flags
+
+	@classmethod
+	def from_template(cls, template, target):
+		power = dice.roll(num = template['damage_dice'], mod = template['damage_mod'])
+		damage_type = DamageType(template['damage_type'])
+		return cls(power, damage_type, target)
 
 	def __str__(self):
 		return "Attack: power " + str(self.power) + " acc " + str(self.accuracy)
