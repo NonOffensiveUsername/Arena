@@ -60,10 +60,15 @@ class Actor(Entity):
 				result.append([hand, hand.held])
 		return result
 
+	def get_weapon(self):
+		held = self.get_held_entities()
+		if not held: return None
+		return held[0][1]
+
 	def search_for_entities(self, game_state):
 		local_entities = self.observer.contents
 		visible_entities = list(filter(
-			lambda x: game_state.visibility_between(self.position, x.global_position) > 0,
+			lambda x: game_state.visibility_between(self.position, x.global_position) > 0 and x.position is not None,
 			local_entities))
 		visible_entities.sort(key = lambda x: util.manhattan_dist(self.position, x.global_position))
 		return visible_entities

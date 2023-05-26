@@ -23,21 +23,7 @@ if DEBUG:
 	player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
 	player.seen = set()
 	player.currently_seen = set()
-	#feloid = RandomWalker.from_template("Feloid Wanderer", (17, 8), template_dict["feloid"])
-	#kobold = Chaser.from_template("Kobold Chaser", (15, 6), template_dict["kobold"])
-	#kobold.target = player
-	#genie = Actor.from_template("Genie", (45, 10), template_dict["spirit"])
-	crab = TetheredWanderer.from_template("Crab", (49, 10), template_dict["crab"])
-	crab.tether = (
-		(49, 10),
-		(49, 11),
-		(49, 12),
-		(49, 13),
-		(50, 10),
-		(50, 11),
-		(50, 12),
-		(50, 13),
-	)
+	
 	axe = Entity.from_template("Axe", (11, 16), template_dict["axe"])
 
 	sack = Entity.from_template("[128,128,0]Burlap sack[w]", (4, 6), template_dict["sack"])
@@ -56,10 +42,12 @@ if DEBUG:
 
 	soyjak = Actor.from_template("Soyjak", (29, 11), template_dict["human"])
 	gun = Entity.from_template("Rifle", (21, 15), template_dict["bolt action rifle"])
+	bullets = [Entity.from_template('Rifle Cartridge', None, template_dict['rifle cartridge']) for i in range(5)]
+	for b in bullets:
+		gun.insert(b)
 
 	entities = EntityContainer()
-	#entities.add_entity(player, kobold, feloid, genie, crab, axe)
-	entities.add_entity(player, crab, axe, soyjak, gun)
+	entities.add_entity(player, axe, soyjak, gun, *bullets)
 	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
 
 	zombies = [Monster.from_template(f"Zombie {x}", (55, 11 + x), template_dict["human"], template_dict["zombie"]) for x in range(4)]
@@ -162,6 +150,31 @@ def pick_adjacent_entity(prompt):
 	if target is None: return None
 	return neighbors[target]
 
+def fire(template):
+	visible_entities = player.search_for_entities(tiles)
+	pointer = widget.Pointer(*player.position)
+	menu = widget.SingleSelectMenu(60, 0, 39, 12,
+		"Available Targets:", [i.name for i in visible_entities])
+	UI.register(pointer)
+	UI.register(menu)
+	player.aim_target = visible_entities[menu.pointer]
+	while key := poll().symbol:
+		if key == 'j':
+			menu.pointer += 1
+		elif key == 'k':
+			menu.pointer -= 1
+		elif key == 'f' or key == 'enter':
+			player.shoot(template, player.aim_target)
+		elif key == 's':
+			player.wait()
+		elif key == 'escape':
+			break
+		menu.pointer %= len(menu.options)
+		pointer.x, pointer.y = visible_entities[menu.pointer].position
+		player.aim_target = visible_entities[menu.pointer]
+	UI.pop_widget()
+	UI.pop_widget()
+
 # Works for any list of objects with .name attributes
 # Mainly entities and body parts
 def pick_named_object_from_list(prompt, options):
@@ -224,11 +237,6 @@ while event := poll():
 		if pause_option == 0: break
 	elif key == 'p':
 		break
-	elif key == 'e':
-		interaction_type = get_single_menu_selection("Interact:", ['Attack', 'Pet'])
-		if interaction_type is None: continue
-		interaction_target = pick_adjacent_entity("Target:")
-		if interaction_target is None: continue
 	elif key == 'g':
 		pick_target = pick_adjacent_entity("Pick up what?")
 		if not pick_target: continue
@@ -272,5 +280,17 @@ while event := poll():
 	elif key == 'd':
 		if (drop_target := select_inventory_item()) is None: continue
 		player.drop(drop_target)
+	elif key == 's':
+		player.wait()
+	elif key == 'f':
+		weapon = player.get_weapon()
+		if weapon is None:
+			shoutbox.add_shout("You are not holding a weapon!")
+			continue
+		if not weapon.ranged_attacks:
+			shoutbox.add_shout(f"The {weapon.name} has no ranged attacks!")
+			continue
+		attack_template = weapon.ranged_attacks[0]
+		fire(attack_template)
 
 	entities.process(tiles)

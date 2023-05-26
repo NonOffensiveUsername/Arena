@@ -80,7 +80,7 @@ default_entity_attributes = {
 	"use_cases": [],
 	"melee_attacks": [],
 	"ranged_attacks": [],
-	"ammo": [],
+	"ammo": {},
 	"display": {
 		"character": '*',
 		"fg": [255, 255, 255],

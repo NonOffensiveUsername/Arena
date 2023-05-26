@@ -74,9 +74,6 @@
 			"ST": 1,
 			"HT": 12
 		},
-		"trait": {
-			"stackable": true
-		},
 		"ammo": {
 			"rifle": {}
 		},
