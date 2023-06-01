@@ -46,11 +46,82 @@ class Actor(Entity):
 		self.aim_target = None
 		self.aim_turns = 0
 		self.skills = {'rifle': 10}
-		self.goal = None
+		self._goals = []
+		# Temporary
+		self._goals.append((GoalType.SURVIVE,))
+		self.hostiles = set()
+		self.known_locations = {}
 
 	@property
 	def speed(self):
 		return (self.DX + self.HT) / 4 + self.traits.get("speed_boost", 0)
+
+	def update(self, game_state):
+		if self.dead:
+			self.delay += 1000
+			return
+		action = self.think(game_state)
+		self.perform_action(action, game_state)
+
+	def process_goal(self, goal, game_state):
+		match goal:
+			# Current survive behavior:
+			# -Check for visible hostile entities
+			# -Try to kill the closest one
+			# -If none are visible, stay still
+			case GoalType.SURVIVE,:
+				seen = set(self.search_for_entities(game_state))
+				for e in seen:
+					if ('monster' in self.factions) != ('monster' in e.factions):
+						self.hostiles.add(e)
+				visible_hostiles = list(filter(lambda x: not x.dead, seen & self.hostiles))
+				visible_hostiles.sort(key = lambda x: util.manhattan_dist(x.position, self.position))
+				if not visible_hostiles:
+					return (goal, (ActionType.WAIT,))
+				return ((GoalType.SURVIVE,), (GoalType.KILL, visible_hostiles[0]))
+			# Current kill behavior:
+			# -Shoot if possible
+			# -Otherwise melee attack if possible
+			# -Otherwise move towards target
+			case GoalType.KILL, target:
+				if target.dead:
+					return ()
+				weapon = self.get_weapon()
+				if weapon and weapon.ranged_attacks:
+					return (goal, (ActionType.SHOOT, target))
+				melee_template = self.get_melee_attack_template()
+				dist = util.manhattan_dist(self.position, target.position)
+				if dist in melee_template['reach']:
+					return (goal, (ActionType.STRIKE, target))
+				return (goal, (GoalType.APPROACH, target))
+			# Current approach behavior:
+			# -Move towards target
+			case GoalType.APPROACH, target:
+				direction = self.path_towards(game_state, target, 1)
+				return ((ActionType.MOVE, direction),)
+		raise Exception(f"{goal} not matched!")
+
+	def perform_action(self, action, game_state):
+		match action:
+			case ActionType.WAIT,:
+				self.wait()
+			case ActionType.MOVE, direction:
+				self.move(game_state, direction)
+			case ActionType.STRIKE, target:
+				self.send_attack(target)
+			case ActionType.SHOOT, target:
+				template = self.get_ranged_attack_template()
+				self.shoot(template, target)
+			case _:
+				raise Exception(f"{action} not matched!")
+
+	def think(self, game_state):
+		goal = self._goals.pop()
+		if type(goal[0]) == ActionType:
+			return goal
+		result = self.process_goal(goal, game_state)
+		self._goals += result
+		return self.think(game_state)
 
 	def get_held_entities(self):
 		result = []
@@ -73,20 +144,21 @@ class Actor(Entity):
 		visible_entities.sort(key = lambda x: util.manhattan_dist(self.position, x.global_position))
 		return visible_entities
 
+	def get_melee_attack_template(self):
+		weapon = self.get_weapon()
+		if weapon and weapon.melee_attacks:
+			return weaponn.melee_attacks[0]
+		return self.melee_attacks[0]
+
+	def get_ranged_attack_template(self):
+		weapon = self.get_weapon()
+		if weapon and weapon.ranged_attacks:
+			return weapon.ranged_attacks[0]
+		return None
+
 	def send_attack(self, target, target_part = None):
-		# This all sucks, attack should be selected outside this function
-		# Specifically, this function should ONLY handle building the attack object
-		# and triggering the targets receiver method.
-		primary_hand = None
-		if hands := self.root_part.get_parts_with_trait(PartFlag.GRASPER):
-			primary_hand = hands[0]
-		weapon = None
-		if primary_hand and primary_hand.held:
-			weapon = primary_hand.held
-		attack_template = self.melee_attacks[0]
-		if weapon:
-			attack_template = weapon.melee_attacks[0]
-		# /suckage
+		# TODO: This should be passed into the function
+		attack_template = self.get_melee_attack_template()
 		acc = dice.roll()
 		swing = attack_template["muscle"] == "swing"
 		effective_ST = self.ST + max(2, self.ST - 7) if swing else self.ST
@@ -187,90 +259,3 @@ class Actor(Entity):
 			return None
 		next_square = game_state.next_step_towards(self.position, target.position)
 		return util.tup_sub(next_square, self.position)
-
-class RandomWalker(Actor):
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-
-	def update(self, game_state):
-		if self.hp <= 0 or self.position is None:
-			self.delay = 1000
-			return
-		direction = (random.randrange(-1, 2), random.randrange(-1, 2))
-		self.move(game_state, direction)
-
-class Chaser(Actor):
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-
-	def update(self, game_state):
-		if self.hp <= 0 or self.position is None:
-			self.delay = 1000
-			return
-		direction = self.path_towards(game_state, self.target, 1)
-		if direction is not None:
-			self.move(game_state, direction)
-			return
-		self.send_attack(self.target)
-
-class TetheredWanderer(Actor):
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-		self.target_position = self.position
-
-	def update(self, game_state):
-		if self.hp <= 0 or self.position is None:
-			self.delay = 1000
-			return
-		dist_from_target = util.manhattan_dist(self.position, self.target_position)
-		if dist_from_target > 0:
-			next_square = game_state.next_step_towards(self.position, self.target_position)
-			direction = (next_square[0] - self.position[0], next_square[1] - self.position[1])
-			self.move(game_state, direction)
-			return
-		if random.randint(0, 9) < 2:
-			self.target_position = random.choice(self.tether)
-		self.delay = 10
-
-class Monster(Actor):
-	def update(self, game_state):
-		if self.dead or self.awareness != Awareness.ALERT:
-			self.delay = 100
-			return
-		if self.goal is None:
-			visible_entities = self.search_for_entities(game_state)
-			for entity in visible_entities:
-				if type(entity) != Entity and "monster" not in entity.factions:
-					self.goal = entity
-					break
-		if self.goal is None:
-			self.delay = 10
-			if random.randint(0, 9) < 2:
-				self.move(game_state, random.choice(util.MOORE_NEIGHBORHOOD))
-			return
-		if (direction := self.path_towards(game_state, self.goal, 1)) is not None:
-			self.move(game_state, direction)
-			return
-		
-		self.delay = 10
-
-class Soldier(Actor):
-	def update(self, game_state):
-		if self.goal and self.goal.dead:
-			self.goal = None
-		if self.dead or self.awareness != Awareness.ALERT:
-			self.delay = 100
-			return
-		visible_entities = self.search_for_entities(game_state)
-		for entity in visible_entities:
-			if type(entity) != Entity and "monster" in entity.factions and not entity.dead:
-				self.goal = entity
-				break
-		if self.goal is None:
-			self.delay = 10
-			if random.randint(0, 9) < 1:
-				self.move(game_state, random.choice(util.MOORE_NEIGHBORHOOD))
-			return
-		weapon = self.get_held_entities()[0][1]
-		attack_template = weapon.ranged_attacks[0]
-		self.shoot(attack_template, self.goal)

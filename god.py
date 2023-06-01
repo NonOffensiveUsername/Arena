@@ -26,13 +26,13 @@ if DEBUG:
 	entities = EntityContainer()
 
 	for i in range(4):
-		soldier = Soldier.from_template("Soldier", (36, 11 + i), template_dict["human"])
+		soldier = Actor.from_template("Soldier", (36, 11 + i), template_dict["human"])
 		gun = Entity.from_template("Rifle", None, template_dict["bolt action rifle"])
 		soldier.get(gun)
 		entities.add_entity(soldier, gun)
 		soldier.delay = i * 3
 
-	zombies = [Monster.from_template(f"Zombie {x}", (55, 11 + x), template_dict["human"], template_dict["zombie"]) for x in range(4)]
+	zombies = [Actor.from_template(f"Zombie {x}", (55, 11 + x), template_dict["human"], template_dict["zombie"]) for x in range(4)]
 	entities.add_entity(*zombies)
 
 	# Adding flow features to water tiles... maybe just inherently randomize fluid rendering?
@@ -164,7 +164,7 @@ while event := idle():
 			target = (random.randrange(60), random.randrange(20))
 			if tiles.get_tile(*target).traversal_cost() >= 0:
 				break
-		z = Monster.from_template("Zombie", target, template_dict["human"], template_dict["zombie"])
+		z = Actor.from_template("Zombie", target, template_dict["human"], template_dict["zombie"])
 		entities.add_entity(z)
 	elif sym == 'space':
 		pause_label = widget.Label(0, 0, "[g][B100,100,100]Paused")

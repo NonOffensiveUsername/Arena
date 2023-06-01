@@ -4,6 +4,22 @@ import util
 import random
 import dice
 
+class GoalType(Enum):
+	SURVIVE = "survive"
+	KILL = "kill"
+	FIND = "find"
+	REACH = "reach"
+	APPROACH = "approach"
+	ACQUIRE = "acquire"
+
+class ActionType(Enum):
+	MOVE = "move"
+	STRIKE = "strike"
+	SHOOT = "shoot"
+	GET = "get"
+	DROP = "drop"
+	WAIT = "wait"
+
 class State(Enum):
 	SOLID = "solid"
 	LIQUID = "liquid"
