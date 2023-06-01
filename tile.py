@@ -18,6 +18,11 @@ class Tile:
 		self._features.append(feature)
 		self._features.sort(key = lambda x: x.z_index)
 
+	def contains_flag(self, flag):
+		for f in self._features:
+			if flag in f.flags: return True
+		return False
+
 	def build_descriptor(self):
 		wall_tag = util.build_tag(self.wall_material.fg, self.wall_material.bg)
 		wall_entry = f"Wall: {wall_tag}{self.wall_material.name}"

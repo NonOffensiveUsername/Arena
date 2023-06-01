@@ -71,5 +71,25 @@
 			"character": 15,
 			"fg": [255, 0, 0]
 		}
+	},
+	"hunter": {
+		"factions": ["monster"],
+		"attribute": {
+			"size": 1,
+			"ST": 15,
+			"HT": 12,
+			"DX": 15,
+			"IQ": 8
+		},
+		"display": {
+			"character": "&",
+			"fg": [0, 50, 65]
+		}
+	},
+	"sentry": {
+		"display": {
+			"character": "A",
+			"fg": [150, 150, 150]
+		}
 	}
 }

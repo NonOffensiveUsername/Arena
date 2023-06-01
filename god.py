@@ -10,30 +10,27 @@ import loader
 import time
 import copy
 import random
+import sys
 from collections import deque
 
 mat_dict = loader.load_materials()
 template_dict = loader.load_templates()
 Entity.DEFAULT_MAT = mat_dict["flesh"]
 feature_dict = loader.load_features(mat_dict)
-tiles = loader.load_map(mat_dict, feature_dict, "map")
+map_name = "map"
+if len(sys.argv) > 1: map_name = sys.argv[1]
+tiles, entity_blueprint = loader.load_map(mat_dict, feature_dict, map_name)
+
+entities = EntityContainer()
+
+for e in entity_blueprint:
+	template = entity_blueprint[e]
+	new_entity = Actor.from_template(template, e, template_dict[template])
+	entities.add_entity(new_entity)
 
 DEBUG = True
 
 if DEBUG:
-	# Test entities
-
-	entities = EntityContainer()
-
-	for i in range(4):
-		soldier = Actor.from_template("Soldier", (36, 11 + i), template_dict["human"])
-		gun = Entity.from_template("Rifle", None, template_dict["bolt action rifle"])
-		soldier.get(gun)
-		entities.add_entity(soldier, gun)
-		soldier.delay = i * 3
-
-	zombies = [Actor.from_template(f"Zombie {x}", (55, 11 + x), template_dict["human"], template_dict["zombie"]) for x in range(4)]
-	entities.add_entity(*zombies)
 
 	# Adding flow features to water tiles... maybe just inherently randomize fluid rendering?
 	flow_glyph = UnstableGlyph(

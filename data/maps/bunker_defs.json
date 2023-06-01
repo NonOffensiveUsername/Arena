@@ -1,0 +1,47 @@
+{
+	"X": {
+		"wall_material": "metal",
+		"floor_material": "metal",
+		"ceiling_material": "metal"
+	},
+	" ": {
+		"wall_material": "air",
+		"floor_material": "metal",
+		"ceiling_material": "metal"
+	},
+	":": {
+		"wall_material": "air",
+		"floor_material": "metal",
+		"ceiling_material": "metal",
+		"features": ["door"]
+	},
+	"-": {
+		"wall_material": "air",
+		"floor_material": "metal",
+		"ceiling_material": "metal",
+		"features": ["sandbag"]
+	},
+	".": {
+		"wall_material": "air",
+		"floor_material": "water",
+		"ceiling_material": "metal"
+	},
+	"@": {
+		"wall_material": "air",
+		"floor_material": "metal",
+		"ceiling_material": "metal",
+		"entity": "human"
+	},
+	"A": {
+		"wall_material": "air",
+		"floor_material": "metal",
+		"ceiling_material": "metal",
+		"entity": "sentry"
+	},
+	"&": {
+		"wall_material": "air",
+		"floor_material": "metal",
+		"ceiling_material": "metal",
+		"entity": "hunter"
+	}
+}

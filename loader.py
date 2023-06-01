@@ -38,6 +38,7 @@ def load_map(materials, features, map_name):
 	map_raw = map_raw.replace("\n", "")
 
 	tiles = tile.TileContainer({}, width, height)
+	entity_blueprint = {}
 	for z in range(0, len(map_raw)):
 		glyph = map_raw[z]
 		tile_template = tile_defs[glyph]
@@ -49,9 +50,13 @@ def load_map(materials, features, map_name):
 		if "features" in tile_template:
 			for feature in tile_template["features"]:
 				new_tile.add_feature(features[feature])
-		tiles.set_tile(z % width, z // width, new_tile)
+		x = z % width
+		y = z // width
+		if "entity" in tile_template:
+			entity_blueprint[(x, y)] = tile_template['entity']
+		tiles.set_tile(x, y, new_tile)
 
-	return tiles
+	return tiles, entity_blueprint
 
 def load_templates():
 	result = {}

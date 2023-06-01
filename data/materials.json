@@ -12,6 +12,18 @@
 		"smooth":true
 	},
 	{
+		"name": "metal",
+		"state": "solid",
+		"density": 8,
+		"hardness": 16,
+		"opacity": 1,
+		"texture": "+",
+		"fg": [150, 150, 150],
+		"bg": [0, 0, 0],
+		"floor_color": [150, 150, 150],
+		"smooth": true
+	},
+	{
 		"name": "glass",
 		"state": "solid",
 		"density": 2,

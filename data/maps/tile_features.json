@@ -12,5 +12,22 @@
 		"fg_overwrite": true,
 		"char_overwrite": true,
 		"symbol": {"character": "\"", "fg": [0, 255, 0]}
+	},
+	"sandbag": {
+		"z_index": -1,
+		"material": "sand",
+		"fg_overwrite": true,
+		"bg_overwrite": true,
+		"char_overwrite": true,
+		"symbol": {"character": 240, "fg": [255, 255, 153], "bg": [0, 0, 0]}
+	},
+	"door": {
+		"z_index": -1,
+		"material": "metal",
+		"fg_overwrite": true,
+		"bg_overwrite": true,
+		"char_overwrite": true,
+		"symbol": {"character": 8, "fg": [120, 120, 120], "bg": [0, 0, 0]},
+		"flags": ["wall_connect"]
 	}
 }

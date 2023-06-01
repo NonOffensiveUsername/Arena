@@ -28,7 +28,7 @@ smooth_glyphs = {
 	(False, True,  False, True ): 200,
 	(True,  True,  False, True ): 0xCA,
 	(False, False, True,  True ): 201,
-	(True,  False, True,  True ): 187,
+	(True,  False, True,  True ): 203,
 	(False, True,  True,  True ): 204,
 	(True,  True,  True,  True ): 206,
 }
@@ -41,7 +41,7 @@ def visual_map_func(tiles, position, brightness = 1.0):
 			neighbors = []
 			for direction in NEUMANN_NEIGHBORHOOD:
 				x = tup_add(position, direction)
-				if x in tiles and tiles[x].wall_material.smooth:
+				if x in tiles and (tiles[x].wall_material.smooth or tiles[x].contains_flag('wall_connect')):
 					neighbors.append(True)
 				else:
 					neighbors.append(False)
