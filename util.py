@@ -1,6 +1,7 @@
 import math
 import random
 from copy import copy
+from structs import *
 
 MOORE_NEIGHBORHOOD = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
 MOORE_NEIGHBORHOOD_INCLUSIVE = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1))
@@ -106,3 +107,19 @@ def deep_update(a, b):
 
 def cut(string, start, stop):
 	return string[0:start] + string[stop:]
+
+def calculate_damage_multiplier(damage_type, target_part, injury_tolerance):
+	multiplier = 1
+	if damage_type == DamageType.CUT:
+		multiplier = 2 if PartFlag.CUTTABLE in target_part.traits else 1.5
+	elif damage_type == DamageType.PIERCE_SMALL:
+		multiplier = .5 if injury_tolerance is None else .2
+	elif damage_type == DamageType.PIERCE:
+		multiplier = 1 if injury_tolerance is None else .33
+	elif damage_type == DamageType.PIERCE_LARGE:
+		multiplier = 1.5 if injury_tolerance is None else .5
+	elif damage_type == DamageType.PIERCE_HUGE:
+		multiplier = 2 if injury_tolerance is None else 1
+	elif damage_type == DamageType.IMPALE:
+		multiplier = 2 if injury_tolerance is None else 1
+	return multiplier

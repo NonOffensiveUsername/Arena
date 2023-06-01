@@ -40,7 +40,11 @@ class Awareness(Enum):
 class DamageType(Enum):
 	BASH = "bash"
 	CUT = "cut"
+	PIERCE_SMALL = 'pierce_small'
 	PIERCE = "pierce"
+	PIERCE_LARGE = 'pierce_large'
+	PIERCE_HUGE = 'pierce_huge'
+	IMPALE = 'impale'
 	BURN = "burn"
 
 class BodyType(Enum):

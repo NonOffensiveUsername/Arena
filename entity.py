@@ -233,8 +233,10 @@ class Entity:
 	def position(self, new):
 		old = self._position
 		self._position = new
-		if self.observer:
+		try:
 			self.observer.rebucket(self, old, new)
+		except AttributeError:
+			pass
 
 	@property
 	def global_position(self):
@@ -333,12 +335,15 @@ class Entity:
 		return traversible
 
 	def receive_attack(self, attacker, attack):
+		# TODO: armor
 		damage = max(0, attack.power - self.material.hardness)
-		uncapped_damage = damage
 		target_part = attack.target
 		if target_part is None:
 			target_part = self.root_part.get_weighted_random_part()
-		# TODO: Apply multiplier for damage type and target part here
+		# Damage type/target part multipliers
+		multiplier = util.calculate_damage_multiplier(attack.damage_type, target_part, self.traits.get('injury_tolerance', None))
+		damage = math.floor(damage * multiplier)
+		uncapped_damage = damage
 		major_injury_threshold = \
 			self.hp_max // target_part.hp_divisor + (self.hp_max % target_part.hp_divisor > 0) \
 			if target_part.hp_divisor else None
