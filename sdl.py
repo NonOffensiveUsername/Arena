@@ -1,11 +1,19 @@
 from ctypes import *
 from collections import namedtuple
 import os
+import sys
 import struct
 
 ROW_HEIGHT = 16
 COLUMN_WIDTH = 8
-#SCALE_FACTOR = 2
+SCALE_FACTOR = 1
+
+# TODO: More robust command line option handling (centralized)
+if len(sys.argv) > 2:
+	try:
+		SCALE_FACTOR = int(sys.argv[2])
+	except:
+		pass
 
 COLOR_KEY = 0x00FF00FF
 
@@ -113,13 +121,18 @@ class SDL_Rect(Structure):
 
 class Window():
 	def __init__(self, title, x, y, w, h, flags = 0):
-		self.window = dll.SDL_CreateWindow(bytes(title, 'utf-8'), x, y, w, h, flags)
+		self.window = dll.SDL_CreateWindow(bytes(title, 'utf-8'),
+			x * SCALE_FACTOR,
+			y * SCALE_FACTOR,
+			w * SCALE_FACTOR,
+			h * SCALE_FACTOR,
+			flags)
 		self.surface = dll.SDL_GetWindowSurface(self.window)
 		# SDL code suggests that 56 bytes is the maximum size of a returned event union
 		self.event = create_string_buffer(56)
 		self.quit = False
-		self.width = w // COLUMN_WIDTH
-		self.height = h // ROW_HEIGHT
+		self.width = w // (COLUMN_WIDTH * SCALE_FACTOR)
+		self.height = h // (ROW_HEIGHT * SCALE_FACTOR)
 
 	def flush(self, color = 0x00000000):
 		# Color format is 32 bit ARGB
@@ -133,10 +146,11 @@ class Window():
 	# can be retrieved from Glyph objects with .code()
 	def print_glyph(self, char, x, y, fg = (255, 255, 255), bg = (0, 0, 0)):
 		src_rect = SDL_Rect(char % 32 * 8, char // 32 * 16, 8, 16)
-		dst_rect = SDL_Rect(x * COLUMN_WIDTH, y * ROW_HEIGHT, 8, 16)
+		dst_rect = SDL_Rect(x * COLUMN_WIDTH * SCALE_FACTOR, y * ROW_HEIGHT * SCALE_FACTOR, 8 * SCALE_FACTOR, 16 * SCALE_FACTOR)
 		dll.SDL_FillRect(self.surface, dst_rect, rgb_to_int(bg))
 		dll.SDL_SetSurfaceColorMod(glyph_sheet, *fg)
-		dll.SDL_UpperBlit(glyph_sheet, src_rect, self.surface, dst_rect)
+		# Idea: doing the blits without scaling on a buffer and then rescaling the entire thing at once *might* be more performant
+		dll.SDL_UpperBlitScaled(glyph_sheet, src_rect, self.surface, dst_rect)
 		# This is the only place blits happen so no need to reset the color mod every time
 
 	def poll(self):
