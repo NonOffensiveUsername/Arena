@@ -52,9 +52,6 @@ def dir_between(a, b):
 		return (x, y)
 	return None
 
-def rand_dir():
-	return random.choice(((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)))
-
 def tup_add(a, b):
 	return (a[0] + b[0], a[1] + b[1])
 

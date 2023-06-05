@@ -142,6 +142,9 @@ def examine():
 			infobox.entries = [f"{i.name} [r]{i.hp}/{i.hp_max}" for i in found_entities]
 			targeted_tile = tiles.get_tile(*target)
 			infobox.entries += targeted_tile.build_descriptor()
+		elif sym == ';':
+			clang = Event(sound = "Clang!", volume = 2.0, visual_priority = False, position = (pointer.x, pointer.y))
+			entities.add_event(clang)
 		elif sym == 'escape':
 			break
 	UI.pop_widget()

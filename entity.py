@@ -310,7 +310,10 @@ class Entity:
 
 	def raise_event(self, event):
 		if self.observer:
-			self.observer.events.append(event)
+			self.observer.add_event(event)
+
+	def process_event(self, event):
+		return
 
 	def spawn_effect(self, effect):
 		if self.observer:
@@ -424,7 +427,7 @@ class EntityContainer:
 	def __init__(self):
 		self.contents = []
 		self.buckets = defaultdict(list)
-		self.events = []
+		self._events = []
 		self.effects = []
 
 	def add_entity(self, *entities):
@@ -433,6 +436,13 @@ class EntityContainer:
 			e.observer = self
 			self.buckets[e.global_position].append(e)
 		self.sort_entities()
+
+	def add_event(self, event):
+		self._events.append(event)
+		if event.position is None:
+			return
+		for e in self.contents:
+			e.process_event(event)
 
 	# TODO: Make insertions keep entities sorted by size
 	# TODO: Make sort preserving insertion utility function
@@ -473,8 +483,8 @@ class EntityContainer:
 		return discovered
 
 	def pop_events(self):
-		e = self.events.copy()
-		self.events = []
+		e = self._events.copy()
+		self._events = []
 		return e
 
 	def build_grid(self):

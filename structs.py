@@ -11,6 +11,7 @@ class GoalType(Enum):
 	REACH = "reach"
 	APPROACH = "approach"
 	ACQUIRE = "acquire"
+	INVESTIGATE = "investigate"
 
 class ActionType(Enum):
 	MOVE = "move"
@@ -19,6 +20,7 @@ class ActionType(Enum):
 	GET = "get"
 	DROP = "drop"
 	WAIT = "wait"
+	ALERT = 'alert'
 
 class State(Enum):
 	SOLID = "solid"
@@ -73,15 +75,17 @@ class Skill(Enum):
 	BRAWLING = "brawling"
 	BROADSWORD = "broadsword"
 	RIFLE = "rifle"
+	INNATE_ATTACK = "innate_attack"
 
 class Event:
 	# Volume is a logarithmic unit. An event with volume 0 can be heard automatically at a distance of 1 yard.
 	# Each +1 volume doubles this distance, each -1 halves it.
-	def __init__(self, visual = None, sound = None, volume = 0.0, visual_priority = True):
+	def __init__(self, visual = None, sound = None, volume = 0.0, visual_priority = True, position = None):
 		self.visual = visual
 		self.sound = sound
 		self.volume = volume
 		self.visual_priority = visual_priority
+		self.position = position
 
 	@property
 	def primary(self):

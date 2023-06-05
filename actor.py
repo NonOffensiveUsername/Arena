@@ -45,7 +45,8 @@ class Actor(Entity):
 		self.awareness = Awareness.ALERT
 		self.aim_target = None
 		self.aim_turns = 0
-		self.skills = {'rifle': 10}
+		# Temporary
+		self.skills = {'rifle': 10, 'innate_attack': 15}
 		self._goals = []
 		# Temporary
 		self._goals.append((GoalType.SURVIVE,))
@@ -86,32 +87,61 @@ class Actor(Entity):
 			case GoalType.KILL, target:
 				if target.dead:
 					return ()
-				weapon = self.get_weapon()
-				if weapon and weapon.ranged_attacks:
+				if self.get_ranged_attack_template():
 					return (goal, (ActionType.SHOOT, target))
 				melee_template = self.get_melee_attack_template()
 				dist = util.manhattan_dist(self.position, target.position)
 				if dist in melee_template['reach']:
 					return (goal, (ActionType.STRIKE, target))
-				return (goal, (GoalType.APPROACH, target))
+				return (goal, (GoalType.APPROACH, target.position))
 			# Current approach behavior:
 			# -Move towards target
 			case GoalType.APPROACH, target:
 				direction = self.path_towards(game_state, target, 1)
 				return ((ActionType.MOVE, direction),)
+			# Current investigate behavior:
+			# -If target is visible abort
+			# -otherwise approach
+			case GoalType.INVESTIGATE, target:
+				if self.traits.get('immobile', False):
+					return ()
+				if game_state.visibility_between(self.position, target) > .1:
+					return ()
+				return (goal, (GoalType.APPROACH, target))
 		raise Exception(f"{goal} not matched!")
+
+	def process_event(self, event):
+		dist_steps = math.log2(max(util.true_distance(self.position, event.position), 0.5))
+		modifier = math.trunc(event.volume - dist_steps)
+		r = dice.roll()
+		p = self.IQ + modifier
+		if r > p: # TODO: Use perception instead of IQ
+			return
+		goal = self._goals[-1]
+		match goal:
+			case GoalType.SURVIVE,:
+				self._goals.append((GoalType.INVESTIGATE, event.position))
+		#if self._goals[-1][0] != ActionType.ALERT:
+		#	self._goals.append((ActionType.ALERT,))
 
 	def perform_action(self, action, game_state):
 		match action:
 			case ActionType.WAIT,:
 				self.wait()
 			case ActionType.MOVE, direction:
-				self.move(game_state, direction)
+				if self.traits.get('immobile', False):
+					self.wait()
+				else:
+					self.move(game_state, direction)
 			case ActionType.STRIKE, target:
 				self.send_attack(target)
 			case ActionType.SHOOT, target:
 				template = self.get_ranged_attack_template()
 				self.shoot(template, target)
+			case ActionType.ALERT,:
+				sound_profile = self.traits.get('sound_type', None)
+				if sound_profile == 'hunter':
+					self.raise_event(Event(sound = 'The hunter hisses!', visual_priority = False, volume = 1.0, position = self.position))
 			case _:
 				raise Exception(f"{action} not matched!")
 
@@ -151,6 +181,8 @@ class Actor(Entity):
 		return self.melee_attacks[0]
 
 	def get_ranged_attack_template(self):
+		if self.ranged_attacks:
+			return self.ranged_attacks[0]
 		weapon = self.get_weapon()
 		if weapon and weapon.ranged_attacks:
 			return weapon.ranged_attacks[0]
@@ -185,14 +217,16 @@ class Actor(Entity):
 			effective_skill += (attack_template['accuracy'] * (self.aim_turns > 0)) + max(0, self.aim_turns - 1)
 		# effective_skill += <light level>
 		roll = dice.roll()
-		self.raise_event(Event(sound = "Bang!", visual_priority = False))
+		self.raise_event(Event(sound = "Bang!", visual_priority = False, volume = 8.0, position = self.position))
 		vector = util.tup_normalize(util.tup_sub(target.position, self.position))
 		effect_position = util.tup_add(self.position, vector)
-		self.spawn_effect(Effect(effect_position, ['\xB1', '\xB2'], (255, 255, 0), 2))
-		if roll > effective_skill:
+		self.spawn_effect(Effect(effect_position, ['\xB1', '\xB2'], (255, 255, 0), max(2, attack_template['rate_of_fire'] // 2)))
+		if (margin := (effective_skill - roll)) < 0:
 			return # TODO: Accidental targets / collateral damage
+		shots = 1 + (margin // attack_template['recoil'])
 		attack = Attack.from_template(attack_template, target_part)
-		target.receive_attack(self, attack)
+		for i in range(shots):
+			target.receive_attack(self, attack)
 		self.delay += 10
 
 	def receive_attack(self, attacker, attack):
@@ -254,8 +288,8 @@ class Actor(Entity):
 		return picker.ST > self.ST
 
 	def path_towards(self, game_state, target, goal_distance):
-		distance = util.manhattan_dist(self.position, target.position)
+		distance = util.manhattan_dist(self.position, target)
 		if distance <= goal_distance:
 			return None
-		next_square = game_state.next_step_towards(self.position, target.position)
+		next_square = game_state.next_step_towards(self.position, target)
 		return util.tup_sub(next_square, self.position)

@@ -81,12 +81,44 @@
 			"DX": 15,
 			"IQ": 8
 		},
+		"trait": {
+			"sound_type": "hunter"
+		},
 		"display": {
 			"character": "&",
 			"fg": [0, 50, 65]
 		}
 	},
 	"sentry": {
+		"attribute": {
+			"size": -1
+		},
+		"trait": {
+			"immobile": true,
+			"injury_tolerance": "unliving"
+		},
+		"ranged_attacks": [
+			{
+				"skill": "innate_attack",
+				"quality": 0,
+				"muscle": "no",
+				"damage_type": "pierce_small",
+				"damage_dice": 4,
+				"damage_mod": 1,
+				"accuracy": 3,
+				"effective_range": 200,
+				"full_range": 2000,
+				"rate_of_fire": 15,
+				"shots": 20,
+				"load_time": 3,
+				"can_chamber": true,
+				"ammo_class": "pdw",
+				"ST_requirement": 7,
+				"bulk": 3,
+				"recoil": 2,
+				"hands": "always_two_hands"
+			}
+		],
 		"display": {
 			"character": "A",
 			"fg": [150, 150, 150]

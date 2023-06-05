@@ -2,7 +2,7 @@
 	"zombie": {
 		"factions": ["monster"],
 		"trait": {
-			"injury_tolerance": "undead",
+			"injury_tolerance": "unliving",
 			"shambler": 3,
 			"brainless": true,
 			"DX_increase": -2,
