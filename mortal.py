@@ -9,49 +9,33 @@ import util
 import loader
 import time
 import copy
+import sys
 
 mat_dict = loader.load_materials()
 template_dict = loader.load_templates()
 Entity.DEFAULT_MAT = mat_dict["flesh"]
 feature_dict = loader.load_features(mat_dict)
-tiles = loader.load_map(mat_dict, feature_dict, "map")
+map_name = "map"
+if len(sys.argv) > 1: map_name = sys.argv[1]
+tiles, entity_blueprint = loader.load_map(mat_dict, feature_dict, map_name)
+
+entities = EntityContainer()
+
+for e in entity_blueprint:
+	template = entity_blueprint[e]
+	new_entity = Actor.from_template(template, e, template_dict[template])
+	entities.add_entity(new_entity)
+
+player = Actor.from_template('Player', (50, 12), template_dict['human'], is_player = True)
+player.display_tile.character = 0x02
+entities.add_entity(player)
+
+player.current_FOV = set()
+player.discovered = set()
 
 DEBUG = True
 
 if DEBUG:
-	# Test entities
-	player = Actor.from_template("Player", (5, 5), template_dict["demigod"], is_player = True)
-	player.seen = set()
-	player.currently_seen = set()
-	
-	axe = Entity.from_template("Axe", (11, 16), template_dict["axe"])
-
-	sack = Entity.from_template("[128,128,0]Burlap sack[w]", (4, 6), template_dict["sack"])
-	stuff_in_sack = [
-		Entity.from_template("Shiny pebble", None, template_dict["rock"]),
-		Entity.from_template("Dull pebble", None, template_dict["rock"]),
-		Entity.from_template("[128,128,0]Velvet sack[w]", None, template_dict["sack"]),
-		Entity.from_template("Colorful pebble", None, template_dict["rock"]),
-	]
-	magic_pebble = Entity.from_template("[b]Magic pebble[w]", None, template_dict["rock"])
-
-	for thing in stuff_in_sack:
-		sack.insert(thing)
-
-	sack._contents[2].insert(magic_pebble)
-
-	soyjak = Actor.from_template("Soyjak", (29, 11), template_dict["human"])
-	gun = Entity.from_template("Rifle", (21, 15), template_dict["bolt action rifle"])
-	bullets = [Entity.from_template('Rifle Cartridge', None, template_dict['rifle cartridge']) for i in range(5)]
-	for b in bullets:
-		gun.insert(b)
-
-	entities = EntityContainer()
-	entities.add_entity(player, axe, soyjak, gun, *bullets)
-	entities.add_entity(sack, *stuff_in_sack, magic_pebble)
-
-	zombies = [Monster.from_template(f"Zombie {x}", (55, 11 + x), template_dict["human"], template_dict["zombie"]) for x in range(4)]
-	entities.add_entity(*zombies)
 
 	# Adding flow features to water tiles... maybe just inherently randomize fluid rendering?
 	flow_glyph = UnstableGlyph(
@@ -87,11 +71,11 @@ move_binds = {
 }
 
 def update_UI():
-	intermediate_grid = tiles.map_visible(tilemappings.visual_map_func, player.position, player.currently_seen, player.seen)
+	intermediate_grid = tiles.map_visible(tilemappings.visual_map_func, player.position, player.current_FOV, player.discovered)
 	for e in entities.pop_events():
 		shoutbox.add_shout(e.primary)
 	UI.base = intermediate_grid
-	UI.entity_layer = entities.build_grid_with_visibility(player.currently_seen)
+	UI.entity_layer = entities.build_grid_with_visibility(player.current_FOV)
 	status_entries = [
 		f"Name: {player.name}",
 		f"HP: [r]{player.hp}/{player.hp_max}"
@@ -103,8 +87,8 @@ def update_UI():
 
 TICK_RATE = 1/100
 def poll():
-	player.currently_seen = tiles.visible_from(player.position)
-	player.seen = player.seen.union(player.currently_seen)
+	player.current_FOV = tiles.visible_from(player.position)
+	player.discovered = player.discovered.union(player.current_FOV)
 	update_UI()
 	cur_time = None
 	while True:
@@ -194,7 +178,7 @@ def examine():
 			target = (pointer.x, pointer.y)
 			found_entities = entities.buckets[target]
 			infobox.entries = [f"{i.name} [r]{i.hp}/{i.hp_max}" for i in found_entities]
-			if target in player.seen:
+			if target in player.discovered:
 				targeted_tile = tiles.get_tile(*target)
 				infobox.entries += targeted_tile.build_descriptor()
 		elif key == 'escape':
@@ -218,20 +202,15 @@ def select_inventory_item():
 
 # Main loop
 
-player.currently_seen = tiles.visible_from(player.position)
-player.seen = player.seen.union(player.currently_seen)
+player.current_FOV = tiles.visible_from(player.position)
+player.discovered = player.discovered.union(player.current_FOV)
 update_UI()
 
 while event := poll():
 	key = event.symbol
 
 	if key == '`': # debug key, effect subject to change
-		x = time.time()
-		for i in range(100):
-			update_UI()
-		y = time.time()
-		frame_time = (y - x) / 100
-		print("Average time per frame: " + str(frame_time))
+		print(player.position)
 	elif key == 'escape':
 		pause_option = get_single_menu_selection("Options:", ['Quit', 'Resume'])
 		if pause_option == 0: break
