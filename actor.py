@@ -55,12 +55,21 @@ class Actor(Entity):
 
 	@property
 	def speed(self):
-		return (self.DX + self.HT) / 4 + self.traits.get("speed_boost", 0)
+		s = (self.DX + self.HT) / 4 + self.traits.get("speed_boost", 0)
+		if self.hp < self.hp_max / 3: s //= 2
+		return s
 
 	def update(self, game_state):
-		if self.dead:
+		if self.dead or self.awareness == Awareness.UNCONSCIOUS:
 			self.delay += 1000
 			return
+		if self.hp <= 0:
+			if dice.roll() > self.HT:
+				self.awareness = Awareness.UNCONSCIOUS
+				self.delay += 1000
+				self.display_tile.bg = (0, 255, 255)
+				self.raise_event(Event(visual = f"[c]The {self.name} faints!"))
+				return
 		action = self.think(game_state)
 		self.perform_action(action, game_state)
 
@@ -238,7 +247,7 @@ class Actor(Entity):
 
 		while self.hp <= self.hp_max * self.death_checks * -1:
 			self.death_checks += 1
-			if dice.roll() > self.HT:
+			if dice.roll() > self.HT or self.death_checks >= 5:
 				self.dead = True
 				self.display_tile.fg = (150, 150, 150)
 				self.display_tile.bg = (200, 0, 0)
