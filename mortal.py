@@ -72,10 +72,14 @@ move_binds = {
 
 def update_UI():
 	intermediate_grid = tiles.map_visible(tilemappings.visual_map_func, player.position, player.current_FOV, player.discovered)
+	UI.base = intermediate_grid
+
+	intermediate_entity_grid = entities.build_grid_with_visibility(player.current_FOV)
 	for e in entities.pop_events():
 		shoutbox.add_shout(e.primary)
-	UI.base = intermediate_grid
-	UI.entity_layer = entities.build_grid_with_visibility(player.current_FOV)
+		if e.position not in player.current_FOV and not e.visual_priority:
+			intermediate_entity_grid[e.position] = Glyph(0x13, (0, 255, 255))
+	UI.entity_layer = intermediate_entity_grid
 	status_entries = [
 		f"Name: {player.name}",
 		f"HP: [r]{player.hp}/{player.hp_max}"
@@ -249,14 +253,14 @@ while event := poll():
 			else:
 				shoutbox.add_shout("Whoosh!")
 			player.delay += 10
-			continue
-		target = e[0]
-		if len(e) > 1:
-			target = pick_named_object_from_list("Attack what?", e)
-		target_part = None
-		if event.shift:
-			target_part = pick_named_object_from_list("Which part?", target.root_part.get_part_list())
-		player.send_attack(target, target_part)
+		else:
+			target = e[0]
+			if len(e) > 1:
+				target = pick_named_object_from_list("Attack what?", e)
+			target_part = None
+			if event.shift:
+				target_part = pick_named_object_from_list("Which part?", target.root_part.get_part_list())
+			player.send_attack(target, target_part)
 	elif key == 'i':
 		show_inventory()
 	elif key == 'd':
