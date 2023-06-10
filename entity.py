@@ -85,7 +85,7 @@ class Entity:
 		self._contents = []
 		self._position = position
 		self.container = None
-		self.delay = 0
+		self.delay = dice.roll()
 		self.is_player = is_player
 		self.pronoun = "it"
 		self.observer = None
@@ -94,7 +94,7 @@ class Entity:
 		self.melee_attacks = []
 		self.ranged_attacks = []
 		self.ammo = []
-		self.factions = []
+		self.factions = set()
 		self.dead = False
 		self.death_checks = 0
 
@@ -113,7 +113,7 @@ class Entity:
 
 		e.root_part = construct_body(full_template["bodyplan"])
 		e.traits = full_template["trait"]
-		e.factions = full_template["factions"]
+		e.factions = set(full_template["factions"])
 		e.melee_attacks = full_template["melee_attacks"]
 		e.ranged_attacks = full_template["ranged_attacks"]
 		e.ammo = full_template["ammo"]
@@ -200,6 +200,16 @@ class Entity:
 	def update(self, game_state = None):
 		#print(f"The {self.name} continues being a {self.name}.")
 		self.delay = random.randint(1000, 10000)
+
+	def emit_sound(self, descriptor, volume = 0.0):
+		e = Event(
+			sound = descriptor,
+			volume = volume,
+			visual_priority = False,
+			position = self.position,
+			emitter = self
+		)
+		self.raise_event(e)
 
 	def raise_event(self, event):
 		if self.observer:

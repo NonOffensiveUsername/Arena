@@ -244,7 +244,10 @@ while event := poll():
 		target = (player.position[0] + direction[0], player.position[1] + direction[1])
 		e = entities.buckets[target]
 		if not e:
-			shoutbox.add_shout("Whoosh!")
+			if tiles.contents[target].wall_material.state == State.SOLID:
+				player.emit_sound("Clang!", 3.0)
+			else:
+				shoutbox.add_shout("Whoosh!")
 			player.delay += 10
 			continue
 		target = e[0]

@@ -75,10 +75,11 @@ class Actor(Entity):
 
 	def process_goal(self, goal, game_state):
 		match goal:
-			# Current survive behavior:
+			# SURVIVE
 			# -Check for visible hostile entities
-			# -Try to kill the closest one
-			# -If none are visible, stay still
+			# -If any of them are conscious, attack them
+			# -Otherwise, finish off the stragglers (everyone is quite ruthless right now)
+			# -Otherwise, mill around
 			case GoalType.SURVIVE,:
 				seen = set(self.search_for_entities(game_state))
 				for e in seen:
@@ -87,28 +88,39 @@ class Actor(Entity):
 				visible_hostiles = list(filter(lambda x: not x.dead, seen & self.hostiles))
 				visible_hostiles.sort(key = lambda x: util.manhattan_dist(x.position, self.position))
 				if not visible_hostiles:
-					return (goal, (ActionType.WAIT,))
-				return ((GoalType.SURVIVE,), (GoalType.KILL, visible_hostiles[0]))
-			# Current kill behavior:
-			# -Shoot if possible
-			# -Otherwise melee attack if possible
-			# -Otherwise move towards target
+					if random.randint(1, 5) != 1:
+						return (goal, (ActionType.WAIT,))
+					return (goal, (ActionType.MOVE, random.choice(util.MOORE_NEIGHBORHOOD)))
+				conscious_hostiles = list(filter(lambda x: x.awareness == Awareness.ALERT, visible_hostiles))
+				if len(visible_hostiles) > len(conscious_hostiles) > 0:
+					return ((GoalType.SURVIVE,), (GoalType.ATTACK, conscious_hostiles[0]))
+				return ((GoalType.SURVIVE,), (GoalType.ATTACK, visible_hostiles[0]))
+			# KILL
+			# -Attack if target is alive
+			# Not used for normal combat because actor will ignore all other targets
+			# even if they pose a more immediate threat.
 			case GoalType.KILL, target:
 				if target.dead:
 					return ()
+				return (goal, (GoalType.ATTACK, target))
+			# ATTACK
+			# -Try to shoot target
+			# -Failing that, try to strike target in melee
+			# -Failing that, approach target
+			case GoalType.ATTACK, target:
 				if self.get_ranged_attack_template():
-					return (goal, (ActionType.SHOOT, target))
+					return ((ActionType.SHOOT, target),)
 				melee_template = self.get_melee_attack_template()
 				dist = util.manhattan_dist(self.position, target.position)
 				if dist in melee_template['reach']:
-					return (goal, (ActionType.STRIKE, target))
-				return (goal, (GoalType.APPROACH, target.position))
-			# Current approach behavior:
+					return ((ActionType.STRIKE, target),)
+				return ((GoalType.APPROACH, target.position),)
+			# APPROACH
 			# -Move towards target
 			case GoalType.APPROACH, target:
 				direction = self.path_towards(game_state, target, 1)
 				return ((ActionType.MOVE, direction),)
-			# Current investigate behavior:
+			# INVESTIGATE
 			# -If target is visible abort
 			# -otherwise approach
 			case GoalType.INVESTIGATE, target:
@@ -120,6 +132,10 @@ class Actor(Entity):
 		raise Exception(f"{goal} not matched!")
 
 	def process_event(self, event):
+		# Actors magically know if a sound was created by an enemy
+		# TODO: Figure out how to encode decision making info on sounds
+		if event.emitter is not None and (event.emitter.factions & self.factions):
+			return
 		dist_steps = math.log2(max(util.true_distance(self.position, event.position), 0.5))
 		modifier = math.trunc(event.volume - dist_steps)
 		r = dice.roll()
@@ -129,9 +145,9 @@ class Actor(Entity):
 		goal = self._goals[-1]
 		match goal:
 			case GoalType.SURVIVE,:
-				self._goals.append((GoalType.INVESTIGATE, event.position))
-		#if self._goals[-1][0] != ActionType.ALERT:
-		#	self._goals.append((ActionType.ALERT,))
+				if self.traits.get('bestial', False):
+					self._goals.append((GoalType.INVESTIGATE, event.position))
+					self._goals.append((ActionType.ALERT,))
 
 	def perform_action(self, action, game_state):
 		match action:
@@ -150,7 +166,7 @@ class Actor(Entity):
 			case ActionType.ALERT,:
 				sound_profile = self.traits.get('sound_type', None)
 				if sound_profile == 'hunter':
-					self.raise_event(Event(sound = 'The hunter hisses!', visual_priority = False, volume = 1.0, position = self.position))
+					self.emit_sound('[c]Hiss!', 1.0)
 			case _:
 				raise Exception(f"{action} not matched!")
 
@@ -226,7 +242,7 @@ class Actor(Entity):
 			effective_skill += (attack_template['accuracy'] * (self.aim_turns > 0)) + max(0, self.aim_turns - 1)
 		# effective_skill += <light level>
 		roll = dice.roll()
-		self.raise_event(Event(sound = "Bang!", visual_priority = False, volume = 8.0, position = self.position))
+		self.emit_sound('Bang!', 8.0)
 		vector = util.tup_normalize(util.tup_sub(target.position, self.position))
 		effect_position = util.tup_add(self.position, vector)
 		self.spawn_effect(Effect(effect_position, ['\xB1', '\xB2'], (255, 255, 0), max(2, attack_template['rate_of_fire'] // 2)))
@@ -245,13 +261,17 @@ class Actor(Entity):
 			return
 		super().receive_attack(attacker, attack)
 
+		if self.dead: return
+
 		while self.hp <= self.hp_max * self.death_checks * -1:
 			self.death_checks += 1
 			if dice.roll() > self.HT or self.death_checks >= 5:
 				self.dead = True
+				self.awareness = Awareness.DEAD
 				self.display_tile.fg = (150, 150, 150)
 				self.display_tile.bg = (200, 0, 0)
 				self.raise_event(Event(visual = f"[m]The {self.name} is struck down."))
+				self.name += " corpse"
 				return
 			self.raise_event(Event(visual = f"The {self.name} manages to evade death!"))
 
@@ -261,6 +281,8 @@ class Actor(Entity):
 		self.delay += 10
 
 	def dodge(self):
+		if self.awareness != Awareness.ALERT:
+			return False
 		dodge_target = int(self.speed) + 3
 		r = dice.roll()
 		return r <= dodge_target

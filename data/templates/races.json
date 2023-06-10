@@ -82,7 +82,8 @@
 			"IQ": 8
 		},
 		"trait": {
-			"sound_type": "hunter"
+			"sound_type": "hunter",
+			"bestial": true
 		},
 		"display": {
 			"character": "&",

@@ -7,6 +7,8 @@ import dice
 class GoalType(Enum):
 	SURVIVE = "survive"
 	KILL = "kill"
+	FIGHT = "fight"
+	ATTACK = "attack"
 	FIND = "find"
 	REACH = "reach"
 	APPROACH = "approach"
@@ -38,6 +40,7 @@ class Awareness(Enum):
 	ALERT = "alert"
 	SLEEP = "sleep"
 	UNCONSCIOUS = "unconscious"
+	DEAD = "dead"
 
 class DamageType(Enum):
 	BASH = "bash"
@@ -80,12 +83,13 @@ class Skill(Enum):
 class Event:
 	# Volume is a logarithmic unit. An event with volume 0 can be heard automatically at a distance of 1 yard.
 	# Each +1 volume doubles this distance, each -1 halves it.
-	def __init__(self, visual = None, sound = None, volume = 0.0, visual_priority = True, position = None):
+	def __init__(self, visual = None, sound = None, volume = 0.0, visual_priority = True, position = None, emitter = None):
 		self.visual = visual
 		self.sound = sound
 		self.volume = volume
 		self.visual_priority = visual_priority
 		self.position = position
+		self.emitter = emitter
 
 	@property
 	def primary(self):
