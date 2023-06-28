@@ -1,47 +1,47 @@
 {
 	"X": {
-		"wall_material": "metal",
-		"floor_material": "metal",
-		"ceiling_material": "metal"
+		"wall": "metal",
+		"floor": "metal",
+		"ceil": "metal"
 	},
 	" ": {
-		"wall_material": "air",
-		"floor_material": "metal",
-		"ceiling_material": "metal"
+		"floor": "metal",
+		"ceil": "metal"
 	},
 	":": {
-		"wall_material": "air",
-		"floor_material": "metal",
-		"ceiling_material": "metal",
+		"floor": "metal",
+		"ceil": "metal",
 		"features": ["door"]
 	},
 	"-": {
-		"wall_material": "air",
-		"floor_material": "metal",
-		"ceiling_material": "metal",
+		"floor": "metal",
+		"ceil": "metal",
 		"features": ["sandbag"]
 	},
 	".": {
-		"wall_material": "air",
-		"floor_material": "water",
-		"ceiling_material": "metal"
+		"floor": "water",
+		"ceil": "metal"
 	},
 	"@": {
-		"wall_material": "air",
-		"floor_material": "metal",
-		"ceiling_material": "metal",
-		"entity": "human"
+		"floor": "metal",
+		"ceil": "metal",
+		"entity": {
+			"templates": [ "human" ]
+		}
 	},
 	"A": {
-		"wall_material": "air",
-		"floor_material": "metal",
-		"ceiling_material": "metal",
-		"entity": "sentry"
+		"floor": "metal",
+		"ceil": "metal",
+		"entity": {
+			"templates": [ "sentry" ]
+		}
 	},
 	"&": {
-		"wall_material": "air",
-		"floor_material": "metal",
-		"ceiling_material": "metal",
-		"entity": "hunter"
+		"floor": "metal",
+		"ceil": "metal",
+		"entity": {
+			"templates": [ "hunter" ],
+			"goal": "hunt"
+		}
 	}
 }

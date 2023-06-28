@@ -1,0 +1,23 @@
+{
+	" ": {
+		"floor": "sand"
+	},
+	"X": {
+		"floor": "sand",
+		"wall": "wood"
+	},
+	"@": {
+		"floor": "sand",
+		"entity": {
+			"templates": [ "human", "team red" ],
+			"held": []
+		}
+	},
+	"H": {
+		"floor": "sand",
+		"entity": {
+			"templates": [ "human", "team blue" ],
+			"held": [ "long spear" ]
+		}
+	}
+}

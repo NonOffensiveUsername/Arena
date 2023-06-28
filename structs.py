@@ -12,6 +12,7 @@ class GoalType(Enum):
 	FIND = "find"
 	REACH = "reach"
 	APPROACH = "approach"
+	RETREAT = 'retreat'
 	ACQUIRE = "acquire"
 	INVESTIGATE = "investigate"
 
@@ -79,6 +80,7 @@ class Skill(Enum):
 	BROADSWORD = "broadsword"
 	RIFLE = "rifle"
 	INNATE_ATTACK = "innate_attack"
+	SPEAR = 'spear'
 
 class Event:
 	# Volume is a logarithmic unit. An event with volume 0 can be heard automatically at a distance of 1 yard.

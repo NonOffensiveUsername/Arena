@@ -1,49 +1,49 @@
 {
 	"X":{
-		"wall_material":"stone",
-		"floor_material":"stone",
-		"ceiling_material":"stone"
+		"wall":"stone",
+		"floor":"stone",
+		"ceil":"stone"
 	},
 	" ":{
-		"wall_material":"air",
-		"floor_material":"dirt",
-		"ceiling_material":"air"
+		"wall":"air",
+		"floor":"dirt",
+		"ceil":"air"
 	},
 	"O":{
-		"wall_material":"wood",
-		"floor_material":"dirt",
-		"ceiling_material":"air"
+		"wall":"wood",
+		"floor":"dirt",
+		"ceil":"air"
 	},
 	"#": {
-		"wall_material": "glass",
-		"floor_material": "stone",
-		"ceiling_material": "stone"
+		"wall": "glass",
+		"floor": "stone",
+		"ceil": "stone"
 	},
 	"+": {
-		"wall_material": "air",
-		"floor_material": "stone",
-		"ceiling_material": "stone"
+		"wall": "air",
+		"floor": "stone",
+		"ceil": "stone"
 	},
 	".": {
-		"wall_material": "air",
-		"floor_material": "sand",
-		"ceiling_material": "air"
+		"wall": "air",
+		"floor": "sand",
+		"ceil": "air"
 	},
 	"~": {
-		"wall_material": "air",
-		"floor_material": "water",
-		"ceiling_material": "air"
+		"wall": "air",
+		"floor": "water",
+		"ceil": "air"
 	},
 	"G": {
-		"wall_material": "air",
-		"floor_material": "dirt",
-		"ceiling_material": "air",
+		"wall": "air",
+		"floor": "dirt",
+		"ceil": "air",
 		"features": ["Gravestone"]
 	},
 	"\"": {
-		"wall_material": "air",
-		"floor_material": "dirt",
-		"ceiling_material": "air",
+		"wall": "air",
+		"floor": "dirt",
+		"ceil": "air",
 		"features": ["Bush"]
 	}
 }

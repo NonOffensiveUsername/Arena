@@ -28,14 +28,13 @@ class KeyEvent:
 	KEYMOD_CTRL  = 0x0040 | 0x0080
 	KEYMOD_ALT   = 0x0100 | 0x0200
 
-	CODES_TO_SYMS = {
+	KEY_CODES_TO_SYMS = {
 		27: "escape",
 		13: "enter",
 		32: "space",
 		79: "right",
 		80: "left",
 		81: "down",
-		86: "up",
 		89: "down_left",
 		90: "down",
 		91: "down_right",
@@ -44,6 +43,11 @@ class KeyEvent:
 		95: "up_left",
 		96: "up",
 		97: "up_right",
+	}
+
+	SCAN_CODES_TO_SYMS = {
+		86: "-",
+		87: "+",
 	}
 
 	def __init__(self, scancode, keycode, keymod):
@@ -74,8 +78,10 @@ class KeyEvent:
 	def symbol(self):
 		if 32 < self.keycode < 0x110000:
 			return chr(self.keycode)
-		if self.keycode in KeyEvent.CODES_TO_SYMS:
-			return KeyEvent.CODES_TO_SYMS[self.keycode]
+		if self.keycode in KeyEvent.KEY_CODES_TO_SYMS:
+			return KeyEvent.KEY_CODES_TO_SYMS[self.keycode]
+		if self.scancode in KeyEvent.SCAN_CODES_TO_SYMS:
+			return KeyEvent.SCAN_CODES_TO_SYMS[self.scancode]
 		return self.scancode
 
 # Tell windows we're DPI aware to prevent stretching and blurring

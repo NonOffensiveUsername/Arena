@@ -2,6 +2,7 @@ import random
 import math
 from structs import *
 from entity import Entity
+from tile import TileFeature
 import dice
 import util
 
@@ -83,10 +84,10 @@ class Actor(Entity):
 			case GoalType.SURVIVE,:
 				seen = set(self.search_for_entities(game_state))
 				for e in seen:
-					if ('monster' in self.factions) != ('monster' in e.factions):
+					if not self.factions & e.factions:
 						self.hostiles.add(e)
 				visible_hostiles = list(filter(lambda x: not x.dead, seen & self.hostiles))
-				visible_hostiles.sort(key = lambda x: util.manhattan_dist(x.position, self.position))
+				visible_hostiles.sort(key = lambda x: util.true_distance(x.position, self.position))
 				if not visible_hostiles:
 					if random.randint(1, 5) != 1:
 						return (goal, (ActionType.WAIT,))
@@ -112,13 +113,19 @@ class Actor(Entity):
 					return ((ActionType.SHOOT, target),)
 				melee_template = self.get_melee_attack_template()
 				dist = util.manhattan_dist(self.position, target.position)
+				# TODO: REWORK SO ATTACKER CAN STEP BEFORE STRIKING
 				if dist in melee_template['reach']:
 					return ((ActionType.STRIKE, target),)
-				return ((GoalType.APPROACH, target.position),)
-			# APPROACH
-			# -Move towards target
+				if dist > max(melee_template['reach']):
+					return ((GoalType.APPROACH, target.position),)
+				return ((GoalType.RETREAT, target.position),)
+			# APPROACH / RETREAT
+			# -Move towards / away from target
 			case GoalType.APPROACH, target:
 				direction = self.path_towards(game_state, target, 1)
+				return ((ActionType.MOVE, direction),)
+			case GoalType.RETREAT, target:
+				direction = util.dir_between(self.position, target)
 				return ((ActionType.MOVE, direction),)
 			# INVESTIGATE
 			# -If target is visible abort
@@ -160,6 +167,9 @@ class Actor(Entity):
 					self.move(game_state, direction)
 			case ActionType.STRIKE, target:
 				self.send_attack(target)
+				template = self.get_melee_attack_template()
+				if util.manhattan_dist(self.position, target.position) < max(template['reach']):
+					self.step_from(game_state, target)
 			case ActionType.SHOOT, target:
 				template = self.get_ranged_attack_template()
 				self.shoot(template, target)
@@ -202,7 +212,7 @@ class Actor(Entity):
 	def get_melee_attack_template(self):
 		weapon = self.get_weapon()
 		if weapon and weapon.melee_attacks:
-			return weaponn.melee_attacks[0]
+			return weapon.melee_attacks[0]
 		return self.melee_attacks[0]
 
 	def get_ranged_attack_template(self):
@@ -254,12 +264,26 @@ class Actor(Entity):
 			target.receive_attack(self, attack)
 		self.delay += 10
 
+	def step_from(self, game_state, target):
+		direction = util.dir_between(self.position, target.position)
+		if direction == (0, 0): direction = random.choice(util.MOORE_NEIGHBORHOOD)
+		if 0 <= self.cost_to(game_state, direction) <= 10:
+			self.apply_delta(direction)
+
 	def receive_attack(self, attacker, attack):
-		if self.dodge():
+		if self.dodge(attacker):
 			attack_descriptor = f"{attacker.name} attacks the {self.name}, but {self.pronoun} dodges!"
 			self.raise_event(Event(visual = attack_descriptor))
 			return
-		super().receive_attack(attacker, attack)
+		if super().receive_attack(attacker, attack) > 0:
+			current_tile = self.observer.tiles.get_tile(*self.position)
+			current_tile.add_feature(
+				TileFeature(
+					name = 'Bloodstain',
+					z_index = 0,
+					fg_overwrite = True,
+					char_overwrite = True,
+					symbol = Glyph('~', (255, 0, 0))))
 
 		if self.dead: return
 
@@ -280,7 +304,7 @@ class Actor(Entity):
 			self.aim_turns += 1
 		self.delay += 10
 
-	def dodge(self):
+	def dodge(self, attacker):
 		if self.awareness != Awareness.ALERT:
 			return False
 		dodge_target = int(self.speed) + 3
@@ -313,7 +337,7 @@ class Actor(Entity):
 		self.delay += 10 # TODO: held items drop easier
 
 	def can_be_picked_up(self, picker):
-		if self.dodge():
+		if self.dodge(picker):
 			self.raise_event(Event(visual = f"The {self.name} dodges the grab!"))
 			return False
 		return picker.ST > self.ST

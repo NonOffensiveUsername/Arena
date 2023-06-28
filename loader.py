@@ -2,6 +2,7 @@ import json
 import os
 import tile
 from structs import *
+from collections import ChainMap
 
 def load_materials():
 	with open("data/materials.json") as mats_file:
@@ -26,6 +27,12 @@ def load_features(materials):
 
 	return features
 
+default_tile = {
+	'wall': 'air',
+	'floor': 'air',
+	'ceil': 'air',
+}
+
 def load_map(materials, features, map_name):
 	with open(f"data/maps/{map_name}_defs.json") as defs_file:
 		tile_defs = json.load(defs_file)
@@ -41,11 +48,11 @@ def load_map(materials, features, map_name):
 	entity_blueprint = {}
 	for z in range(0, len(map_raw)):
 		glyph = map_raw[z]
-		tile_template = tile_defs[glyph]
+		tile_template = ChainMap(tile_defs[glyph], default_tile)
 		new_tile = tile.Tile(
-			materials[tile_template["wall_material"]],
-			materials[tile_template["floor_material"]],
-			materials[tile_template["ceiling_material"]]
+			materials[tile_template["wall"]],
+			materials[tile_template["floor"]],
+			materials[tile_template["ceil"]]
 		)
 		if "features" in tile_template:
 			for feature in tile_template["features"]:

@@ -22,11 +22,18 @@ if len(sys.argv) > 1: map_name = sys.argv[1]
 tiles, entity_blueprint = loader.load_map(mat_dict, feature_dict, map_name)
 
 entities = EntityContainer()
+entities.tiles = tiles
 
-for e in entity_blueprint:
-	template = entity_blueprint[e]
-	new_entity = Actor.from_template(template, e, template_dict[template])
+for pos in entity_blueprint:
+	templates = entity_blueprint[pos]['templates']
+	new_entity = Actor.from_template(templates[0], pos, *[template_dict[template] for template in templates])
 	entities.add_entity(new_entity)
+	for held_item in entity_blueprint[pos].get('held', []):
+		item = Entity.from_template(held_item, None, template_dict[held_item])
+		new_entity.get(item)
+		entities.add_entity(item)
+
+tiles.entities = entities
 
 DEBUG = True
 
@@ -86,7 +93,7 @@ def update_UI():
 	status_box.entries = status_entries
 	# More messy fps tracking
 	now_time = time.time()
-	global last_frame_time
+	global last_frame_time # global ew ick kill it
 	cur_fps = 1 / (now_time - last_frame_time)
 	last_frame_times.append(cur_fps)
 	average_fps = int(sum(last_frame_times) / 10)
@@ -130,24 +137,56 @@ def examine():
 	infobox = widget.ListBox(60, 0, 39, 24, "Located Here:")
 	UI.register(pointer)
 	UI.register(infobox)
+	entity_list_pointer = 0
+	entity_list_length = 0
 	while key := poll():
 		sym = key.symbol
 		if sym in move_binds:
+			entity_list_pointer = 0
 			direction = move_binds[sym]
 			if key.shift:
 				direction = util.tup_mul(direction, (5, 5))
 			pointer.nudge(direction)
-			target = (pointer.x, pointer.y)
-			found_entities = entities.buckets[target]
-			infobox.entries = [f"{i.name} [r]{i.hp}/{i.hp_max}" for i in found_entities]
-			targeted_tile = tiles.get_tile(*target)
-			infobox.entries += targeted_tile.build_descriptor()
+		elif sym == '[' or sym == '-':
+			entity_list_pointer -= 1
+			if entity_list_pointer < 0:
+				entity_list_pointer = entity_list_length - 1
+		elif sym == ']' or sym == '+':
+			entity_list_pointer += 1
+			if entity_list_pointer >= entity_list_length:
+				entity_list_pointer = 0
 		elif sym == ';':
 			clang = Event(sound = "Clang!", volume = 2.0, visual_priority = False, position = (pointer.x, pointer.y))
 			entities.add_event(clang)
 		elif sym == 'escape':
 			break
+		elif sym == 'enter':
+			if entity_list_length:
+				entity_detail_view(entities.buckets[(pointer.x, pointer.y)][entity_list_pointer])
+		target = (pointer.x, pointer.y)
+		targeted_tile = tiles.get_tile(*target)
+		infobox.entries = targeted_tile.build_descriptor()
+		found_entities = entities.buckets[target]
+		entity_list_length = len(found_entities)
+		infobox.entries += [f"{i.name} [r]{i.hp}/{i.hp_max}" for i in found_entities]
+		if entity_list_length:
+			infobox.entries[2 + entity_list_pointer] = "[m]\x1A" + infobox.entries[2 + entity_list_pointer]
 	UI.pop_widget()
+	UI.pop_widget()
+
+def entity_detail_view(entity):
+	details = widget.ListBox(5, 2, 40, 10, entity.name)
+	details.entries = [
+		f"ST: {entity.ST} HT: {entity.HT}",
+		f"DX: {entity.DX} IQ: {entity.IQ}",
+		"Inventory:",
+	]
+	details.entries += entity.build_contents_tree()
+	UI.register(details)
+	while key := poll():
+		sym = key.symbol
+		if sym == 'escape':
+			break
 	UI.pop_widget()
 
 update_UI()

@@ -93,6 +93,7 @@ class TileContainer:
 		self.height = height
 		self.voidtile = VoidTile()
 		self.construct_opacity_grid()
+		self.entities = None
 
 	def construct_opacity_grid(self):
 		self.opacity_grid = self.map(tilemappings.opacity)
@@ -176,6 +177,7 @@ class TileContainer:
 				node_cost = self.contents[node].traversal_cost()
 				if node[0] != current[0] and node[1] != current[1]:
 					node_cost = int(node_cost * 1.4) # Increase costs for diagonal movement
+				node_cost += len(self.entities.buckets[node]) * 5 # Don't overcrowd
 				node_cost += path_cost[current]
 
 				if node not in path_cost or node_cost < path_cost[node]:

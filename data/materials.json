@@ -52,11 +52,11 @@
 		"density": 0.5,
 		"hardness": 0,
 		"opacity": 1,
-		"texture": ".",
+		"texture": "~",
 		"fg": [230, 240, 150],
 		"bg": [0, 0, 0],
 		"floor_color": [250, 240, 150],
-		"smooth": true
+		"smooth": false
 	},
 	{
 		"name": "water",
@@ -76,10 +76,11 @@
 		"density":1,
 		"hardness":3,
 		"opacity":1,
-		"texture":"O",
+		"texture":"+",
 		"fg":[128, 64, 0],
 		"bg":[0, 0, 0],
-		"floor_color":[255, 191, 128]
+		"floor_color":[255, 191, 128],
+		"smooth": true
 	},
 	{
 		"name":"air",

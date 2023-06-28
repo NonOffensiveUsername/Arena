@@ -226,11 +226,14 @@ class Entity:
 		new = (self.position[0] + delta[0], self.position[1] + delta[1])
 		self.position = new
 
+	def cost_to(self, game_state, direction):
+		new_position = util.tup_add(self.position, direction)
+		target_tile = game_state.get_tile(*new_position)
+		return target_tile.traversal_cost() * (1 + util.is_diag(direction) * 0.4)
+
 	def move(self, game_state, direction):
 		if self.position is None: return False
-		new_position = (direction[0] + self.position[0], direction[1] + self.position[1])
-		target_tile = game_state.get_tile(new_position[0], new_position[1])
-		cost = target_tile.traversal_cost() * (1 + util.is_diag(direction) * 0.4)
+		cost = self.cost_to(game_state, direction)
 		if traversible := cost >= 0:
 			self.apply_delta(direction)
 			if "shambler" in self.traits:
@@ -267,14 +270,15 @@ class Entity:
 					self.sever(target_part)
 					sever_descriptor = f"The {self.name}'s {target_part.name} is [r]severed[w] by the attack!"
 					self.raise_event(Event(visual = sever_descriptor))
-					return
+					return damage
 				target_part.kill()
 				destroy_descriptor = f"The {self.name}'s {target_part.name} is [r]pulped[w] by the attack!"
 				self.raise_event(Event(visual = destroy_descriptor))
-				return
+				return damage
 			target_part.traits.append(PartFlag.CRIPPLED)
 			cripple_descriptor = f"The {self.name}'s {target_part.name} is [r]crippled[w] by the blow!"
 			self.raise_event(Event(visual = cripple_descriptor))
+		return damage
 
 	def can_be_picked_up(self, picker):
 		return True
@@ -332,12 +336,14 @@ class EntityContainer:
 		self.buckets = defaultdict(list)
 		self._events = []
 		self.effects = []
+		self.tiles = None
 
 	def add_entity(self, *entities):
 		for e in entities:
 			self.contents.append(e)
 			e.observer = self
-			self.buckets[e.global_position].append(e)
+			if pos := e.position:
+				self.buckets[pos].append(e)
 		self.sort_entities()
 
 	def add_event(self, event):
@@ -350,8 +356,10 @@ class EntityContainer:
 	# TODO: Make insertions keep entities sorted by size
 	# TODO: Make sort preserving insertion utility function
 	def rebucket(self, entity, old, new):
-		self.buckets[old].remove(entity)
-		self.buckets[new].append(entity)
+		if old:
+			self.buckets[old].remove(entity)
+		if new:
+			self.buckets[new].append(entity)
 
 	def sort_entities(self):
 		self.contents = sorted(self.contents, key = lambda x: x.delay)

@@ -12,5 +12,23 @@
 		"display": {
 			"fg": [70, 200, 0]
 		}
+	},
+	"team red": {
+		"factions": ["red"],
+		"display": {
+			"fg": [255, 0, 0]
+		}
+	},
+	"team green": {
+		"factions": ["green"],
+		"display": {
+			"fg": [0, 255, 0]
+		}
+	},
+	"team blue": {
+		"factions": ["blue"],
+		"display": {
+			"fg": [0, 0, 255]
+		}
 	}
 }

@@ -23,6 +23,31 @@
 			"character": "%"
 		}
 	},
+	"long spear": {
+		"attribute": {
+			"ST": 6,
+			"HT": 12
+		},
+		"trait": {
+			"injury_tolerance": "homogenous"
+		},
+		"melee_attacks": [
+			{
+				"skill": "spear",
+				"quality": 0,
+				"muscle": "thrust",
+				"damage_type": "impale",
+				"damage_mod": 2,
+				"ST_requirement": 10,
+				"reach": [2, 3],
+				"parry_flags": ["U"]
+			}
+		],
+		"display": {
+			"character": "/",
+			"fg": [220, 220, 220]
+		}
+	},
 	"bolt action rifle": {
 		"attribute": {
 			"ST": 5
