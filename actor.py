@@ -60,7 +60,7 @@ class Actor(Entity):
 		if self.hp < self.hp_max / 3: s //= 2
 		return s
 
-	def update(self, game_state):
+	def update(self):
 		if self.dead or self.awareness == Awareness.UNCONSCIOUS:
 			self.delay += 1000
 			return
@@ -71,10 +71,10 @@ class Actor(Entity):
 				self.display_tile.bg = (0, 255, 255)
 				self.raise_event(Event(visual = f"[c]The {self.name} faints!"))
 				return
-		action = self.think(game_state)
-		self.perform_action(action, game_state)
+		action = self.think()
+		self.perform_action(action)
 
-	def process_goal(self, goal, game_state):
+	def process_goal(self, goal):
 		match goal:
 			# SURVIVE
 			# -Check for visible hostile entities
@@ -82,7 +82,7 @@ class Actor(Entity):
 			# -Otherwise, finish off the stragglers (everyone is quite ruthless right now)
 			# -Otherwise, mill around
 			case GoalType.SURVIVE,:
-				seen = set(self.search_for_entities(game_state))
+				seen = set(self.search_for_entities())
 				for e in seen:
 					if not self.factions & e.factions:
 						self.hostiles.add(e)
@@ -122,7 +122,7 @@ class Actor(Entity):
 			# APPROACH / RETREAT
 			# -Move towards / away from target
 			case GoalType.APPROACH, target:
-				direction = self.path_towards(game_state, target, 1)
+				direction = self.path_towards(target, 1)
 				return ((ActionType.MOVE, direction),)
 			case GoalType.RETREAT, target:
 				direction = util.dir_between(self.position, target)
@@ -133,7 +133,7 @@ class Actor(Entity):
 			case GoalType.INVESTIGATE, target:
 				if self.traits.get('immobile', False):
 					return ()
-				if game_state.visibility_between(self.position, target) > .1:
+				if self.observer.tiles.visibility_between(self.position, target) > .1:
 					return ()
 				return (goal, (GoalType.APPROACH, target))
 		raise Exception(f"{goal} not matched!")
@@ -156,7 +156,7 @@ class Actor(Entity):
 					self._goals.append((GoalType.INVESTIGATE, event.position))
 					self._goals.append((ActionType.ALERT,))
 
-	def perform_action(self, action, game_state):
+	def perform_action(self, action):
 		match action:
 			case ActionType.WAIT,:
 				self.wait()
@@ -164,12 +164,12 @@ class Actor(Entity):
 				if self.traits.get('immobile', False):
 					self.wait()
 				else:
-					self.move(game_state, direction)
+					self.move(direction)
 			case ActionType.STRIKE, target:
 				self.send_attack(target)
 				template = self.get_melee_attack_template()
 				if util.manhattan_dist(self.position, target.position) < max(template['reach']):
-					self.step_from(game_state, target)
+					self.step_from(target)
 			case ActionType.SHOOT, target:
 				template = self.get_ranged_attack_template()
 				self.shoot(template, target)
@@ -180,13 +180,13 @@ class Actor(Entity):
 			case _:
 				raise Exception(f"{action} not matched!")
 
-	def think(self, game_state):
+	def think(self):
 		goal = self._goals.pop()
 		if type(goal[0]) == ActionType:
 			return goal
-		result = self.process_goal(goal, game_state)
+		result = self.process_goal(goal)
 		self._goals += result
-		return self.think(game_state)
+		return self.think()
 
 	def get_held_entities(self):
 		result = []
@@ -201,10 +201,10 @@ class Actor(Entity):
 		if not held: return None
 		return held[0][1]
 
-	def search_for_entities(self, game_state):
+	def search_for_entities(self):
 		local_entities = self.observer.contents
 		visible_entities = list(filter(
-			lambda x: game_state.visibility_between(self.position, x.global_position) > 0 and x.position is not None,
+			lambda x: self.observer.tiles.visibility_between(self.position, x.global_position) > 0 and x.position is not None,
 			local_entities))
 		visible_entities.sort(key = lambda x: util.manhattan_dist(self.position, x.global_position))
 		return visible_entities
@@ -264,10 +264,10 @@ class Actor(Entity):
 			target.receive_attack(self, attack)
 		self.delay += 10
 
-	def step_from(self, game_state, target):
+	def step_from(self, target):
 		direction = util.dir_between(self.position, target.position)
 		if direction == (0, 0): direction = random.choice(util.MOORE_NEIGHBORHOOD)
-		if 0 <= self.cost_to(game_state, direction) <= 10:
+		if 0 <= self.cost_to(direction) <= 10:
 			self.apply_delta(direction)
 
 	def receive_attack(self, attacker, attack):
@@ -342,9 +342,9 @@ class Actor(Entity):
 			return False
 		return picker.ST > self.ST
 
-	def path_towards(self, game_state, target, goal_distance):
+	def path_towards(self, target, goal_distance):
 		distance = util.manhattan_dist(self.position, target)
 		if distance <= goal_distance:
 			return None
-		next_square = game_state.next_step_towards(self.position, target)
+		next_square = self.observer.tiles.next_step_towards(self.position, target)
 		return util.tup_sub(next_square, self.position)

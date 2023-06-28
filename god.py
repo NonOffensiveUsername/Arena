@@ -115,7 +115,7 @@ def idle():
 			return UI.events.pop(0)
 		else:
 			for i in range(TICKS_PER_FRAME):
-				entities.tick(tiles)
+				entities.tick()
 			time.sleep(max(TICK_RATE - (time.time() - cur_time), 0))
 	return False
 

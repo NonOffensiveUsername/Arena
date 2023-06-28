@@ -197,7 +197,7 @@ class Entity:
 	# e.g. if the object is a light source and it changes how much light it gives off its
 	# update call returns a SIGNALS.UPDATE_LIGHTING or something similar telling the game
 	# engine to recalculate lighting
-	def update(self, game_state = None):
+	def update(self):
 		#print(f"The {self.name} continues being a {self.name}.")
 		self.delay = random.randint(1000, 10000)
 
@@ -226,14 +226,14 @@ class Entity:
 		new = (self.position[0] + delta[0], self.position[1] + delta[1])
 		self.position = new
 
-	def cost_to(self, game_state, direction):
+	def cost_to(self, direction):
 		new_position = util.tup_add(self.position, direction)
-		target_tile = game_state.get_tile(*new_position)
+		target_tile = self.observer.tiles.get_tile(*new_position)
 		return target_tile.traversal_cost() * (1 + util.is_diag(direction) * 0.4)
 
-	def move(self, game_state, direction):
+	def move(self, direction):
 		if self.position is None: return False
-		cost = self.cost_to(game_state, direction)
+		cost = self.cost_to(direction)
 		if traversible := cost >= 0:
 			self.apply_delta(direction)
 			if "shambler" in self.traits:
@@ -364,16 +364,16 @@ class EntityContainer:
 	def sort_entities(self):
 		self.contents = sorted(self.contents, key = lambda x: x.delay)
 
-	def process(self, game_state = None):
+	def process(self):
 		self.sort_entities()
 		while self.contents[0].is_player == False or self.contents[0].delay > 0:
-			self.tick(game_state)
+			self.tick()
 
-	def tick(self, game_state = None):
+	def tick(self):
 		for entity in self.contents:
 			entity.delay -= 1
 		while self.contents[0].delay <= 0 and self.contents[0].is_player == False:
-			self.contents[0].update(game_state)
+			self.contents[0].update()
 			self.sort_entities()
 		expired = []
 		for effect in self.effects:
